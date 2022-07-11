@@ -1,0 +1,1 @@
+curl --request PATCH -H "Content-Type: application/json" -v http://${IntegrationNodeConnectionParameters.host}:${IntegrationNodeConnectionParameters.listenerPort}/apiv2/servers/${IIBsvr}/monitoring/flow-monitoring -d &apos;{&quot;properties&quot;:{&quot;publicationOn&quot;:&quot;active&quot;}}&apos;
