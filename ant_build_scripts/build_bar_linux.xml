@@ -1,0 +1,84 @@
+<project name="IIB-CI-MAIN" default="dev" basedir="../.." >
+	<description>IIB Continuous Integration Demo (main script)</description>
+
+	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+	<target name="init">
+		<tstamp />
+		<property environment="env" />
+		<property name="path.build" value="Build" />
+
+		<echo>Build script for creating bar file for ${env.bamboo_shortPlanName}</echo>
+		<echo>Build script working directory: ${env.bamboo_working_directory} </echo>
+		<echo>Build buildKey: ${env.bamboo_buildKey}</echo>
+		<echo>Build Number: ${env.bamboo_buildNumber} </echo>
+		<property file="${env.bamboo_working_directory}/Build/build_${env.bamboo_shortPlanName}.properties" />
+	</target>
+
+	<target name="dev" depends="init">
+
+		<copy todir="${env.bamboo_working_directory}" >  
+			<fileset dir="${env.bamboo_working_directory}/common/" includes="**"/>
+		</copy>
+
+		<exec executable="git" outputproperty="git.revision">
+			<arg value="rev-parse" />
+			<arg value="--short" />
+			<arg value="HEAD" />
+		</exec>
+
+		<tstamp>
+			<format property="TIME_RSA" pattern="yyyyMMddHHmm"/>
+		</tstamp>
+
+		<!-- basiclly check if the library tag is set if so build with the library else build without the -l (L) tag -->
+		<if>
+			<not>
+				<isset property="iib.minusl" />
+			</not>
+			<then>
+				<!-- build workspace and create BAR file -->
+				<echo>building bar ${TIME_RSA}_${iib.bar}_${git.revision}.bar</echo>
+				<echo>without a library</echo>
+				<exec executable="/opt/mqsi/10.0.0.17/tools/mqsicreatebar">
+					<arg value="-data" />
+					<arg value="${env.bamboo_working_directory}" />
+					<arg value="-b" />
+					<arg value="${TIME_RSA}_${iib.bar}_${git.revision}.bar" />
+					<arg value="-a" />
+					<arg value="${iib.minusA}" />
+					<arg value="-deployAsSource" />
+					<!-- we cannot inline artifacts in a shared library -->
+					<arg value="-cleanBuild" />
+				</exec>
+			</then>
+			<else>
+				<!-- build workspace and create BAR file -->
+				<echo>building bar ${TIME_RSA}_${iib.bar}_${git.revision}.bar</echo>
+				<echo>with library ${iib.minusl}</echo>
+				<exec executable="/opt/mqsi/10.0.0.17/tools/mqsicreatebar">
+					<arg value="-data" />
+					<arg value="${basedir}" />
+					<arg value="-b" />
+					<arg value="${TIME_RSA}_${iib.bar}_${git.revision}.bar" />
+					<arg value="-a" />
+					<arg value="${iib.minusA}" />
+					<arg value="-l" />
+					<arg value="${iib.minusl}" />
+					<arg value="-deployAsSource" />
+					<!-- we cannot inline artifacts in a shared library -->
+					<arg value="-cleanBuild" />
+				</exec>
+			</else>
+		</if>
+
+		<move failonerror="false" verbose="true" todir="./builtbar/archive/">
+			<fileset dir="builtbar/" includes="*${env.bamboo_shortPlanName}*"> </fileset>    
+		</move>
+		<!-- move the bar file to the built bar folder -->
+		<move failonerror="true" verbose="true" todir="builtbar/">
+			<fileset dir="." includes="*${env.bamboo_shortPlanName}*.bar"> </fileset>    
+		</move>
+
+
+	</target>
+</project>

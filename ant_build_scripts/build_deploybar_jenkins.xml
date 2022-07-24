@@ -1,0 +1,142 @@
+<project name="IIB-CI-MAIN" default="deploy_bar" basedir="." >
+	<description>IIB Continuous Integration bamboo deploy plan</description>
+	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+	<macrodef name="getEnv">
+		<attribute name="text"/>
+		<sequential>
+			<property name="IIBnode" value="${@{text}.brokerName}" />
+			<property name="IIBsvr" value="${@{text}.exGroupName}" />
+			<property name="IIBconn" value="${@{text}.conn}" />
+			<property name="IIBenableMon" value="${@{text}.monitoring}" />
+		</sequential>
+	</macrodef>
+	<target name="init">
+		
+		<property environment="env" />
+		<property name="path.build" value="Build" />
+		<loadresource property="jobWithoutFolder">
+			<concat>${env.JOB_NAME}</concat>
+			<filterchain>
+				<replaceregex pattern="^[a-zA-Z]+-[a-zA-Z]+/" replace=""/>
+			</filterchain>
+		</loadresource>
+		<loadresource property="appName">
+			<concat>${jobWithoutFolder}</concat>
+			<filterchain>
+				<replaceregex pattern="^[a-zA-Z]+_" replace=""/>
+			</filterchain>
+		</loadresource>
+		<loadresource property="deployenvironment">
+			<concat>${jobWithoutFolder}</concat>
+			<filterchain>
+				<replaceregex pattern="_${appName}" replace=""/>
+			</filterchain>
+		</loadresource>
+		<property file="${env.WORKSPACE}/Build/build_${appName}.properties" />
+		<echo>${deployenvironment}</echo>
+		<echo>${appName}</echo>
+	
+		
+		<!--<property name="deployenvironment" value="${arg1}" />-->
+		<property file="artifactory.properties" />
+		<getEnv  text="${deployenvironment}"/>
+		<echo>deploy script for deploying ${env.JOB_NAME} to exgroup ${IIBsvr} to environment ${deployenvironment}</echo>
+		<echo>${IIBnode} ${IIBsvr} ${IIBconn}</echo>
+	</target>
+
+	<target name="deploy_bar" depends="init">
+		<!--<property name="iibLocation" value="C:\Program Files\IBM\IIB\10.0.0.5"/> -->
+		<property name="iibLocation" value="/var/mqsi/iib-10.0.0.19/"/>
+
+		<exec executable="git" outputproperty="git.revision">
+			<arg value="rev-parse" />
+			<arg value="--short" />
+			<arg value="HEAD" />
+		</exec>
+		<tstamp>
+			<format property="TIME_RSA" pattern="yyyyMMddHHmm"/>
+		</tstamp>
+
+
+		<fileset dir="${env.WORKSPACE}/builtbar" id= "barId" >
+			<include name= "*_20*.bar" />
+		</fileset >
+		<property name= "barNameID" refid= "barId" />
+		<echo message="${barNameID}"/>
+
+		<copy file="${env.WORKSPACE}/builtbar/${barNameID}" tofile="${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID}"/>
+
+		<fileset dir="${env.WORKSPACE}/builtbar" id="barname">
+			<include name="${deployenvironment}*${env.bamboo_shortPlanName}*.bar"/>
+		</fileset>
+		<pathconvert pathsep="," property="my_file" refid="barname"/>
+
+		<echo message="${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID}"/>
+		<echo message="over ride bar"/>
+		<echo>current directory: ${basedir}</echo>
+		<echo>override properties file ${env.WORKSPACE}\Build\${deployenvironment}_${appName}.properties</echo>
+
+		<fail message="file ${env.WORKSPACE}/Build/${deployenvironment}_${appName}.properties not set or missing">
+			<condition>
+				<not>
+					<available file="${env.WORKSPACE}/Build/${deployenvironment}_${appName}.properties" />
+				</not>
+			</condition>
+		</fail>
+		
+		<exec executable="${iibLocation}/server/bin/mqsiapplybaroverride" failonerror="true"  error="error overriding UDP to bar file">
+			<arg value="-b"/>
+			<arg value="${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID}"/>
+			<arg value="-p"/>
+			<arg value="${env.WORKSPACE}/Build/${deployenvironment}_${appName}.properties"/>
+			<arg value="-r"/>
+		</exec>
+		
+
+		
+		
+		<fileset dir="." id="dpl">
+			<include name="deploybar.sh"/>
+		</fileset>
+		<pathconvert pathsep="," property="dpl_file" refid="dpl"/>
+		<fileset dir="." id="brk">
+			<include name="${IIBnode}.broker"/>
+		</fileset>
+		<pathconvert pathsep="," property="brk_file" refid="brk"/>
+		<echo>${IIBnode} ${IIBsvr} ${IIBconn} </echo>
+		<echo>broker file ${brk_file}</echo>
+		<xmlproperty file="${brk_file}" collapseAttributes="true"/>
+		<!--<echo>${iibLocation}server/bin/mqsideploy -e  ${IIBsvr} -a ${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID} -n ${brk_file} -w 600</echo>
+		 i have to do this cause its mqsiprofile to work-->
+		<echo>/var/mqsi/deploybar.sh ${IIBsvr} ${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID} ${brk_file}</echo>
+		<exec executable="/var/mqsi/deploybar.sh" failonerror="true" logError="false" error="error deploying bar file to ${IIBnode} ${IIBsvr}" resultproperty="App.state" >
+					<arg line='${IIBsvr} ${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID} ${brk_file}' />
+					<redirector output="myfile.txt" alwayslog="true"/>           
+		</exec>
+
+		<echo message="App state was: ${App.state}" />
+		<if>
+			
+			<equals arg1="${IIBenableMon}" arg2="enable"/><!-- arg2="enable" Fix this once ready -->
+			<then>
+				<echo> Enable monitoring tag is set : Running Curl:</echo>
+				<echo> curl --request PATCH -H "Content-Type: application/json"  -v http://${IntegrationNodeConnectionParameters.host}:${IntegrationNodeConnectionParameters.listenerPort}/apiv2/servers/${IIBsvr}/monitoring/flow-monitoring -d &apos;{&quot;properties&quot;:{&quot;publicationOn&quot;:&quot;active&quot;}}&apos; </echo>
+				<exec executable="/usr/bin/curl" failonerror="true" logError="true">
+					<!--<arg line=' request PATCH -H "Content-Type: application/json"  -v http://${IntegrationNodeConnectionParameters.host}:${IntegrationNodeConnectionParameters.listenerPort}/apiv2/servers/${IIBsvr}/monitoring/flow-monitoring -d &apos;@${env.WORKSPACE}\common\Build_Scripts\enablestats.json&apos; ' />-->
+					<arg line=' -I -X PUT -u ${IntegrationNodeConnectionParameters.userName}:${IntegrationNodeConnectionParameters.password} -v http://${IntegrationNodeConnectionParameters.host}:${IntegrationNodeConnectionParameters.listenerPort}/apiv1/executiongroups/${IIBsvr}/applications/${iib.minusA}?action=startFlowMonitoring ' />
+					
+				</exec>
+			</then>
+		</if>
+
+		<checksum file="${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID}" property="CHECKSUM"/>
+		<echo>' -u ${artifactory.user}:${artifactory.password} -T ${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID} --header "X-Checksum-MD5:${CHECKSUM}" "http://${artifactory.host}:${artifactory.port}${artifactory.baseurl}${deployenvironment}/${IIBsvr}/${deployenvironment}_${barNameID}"'</echo>
+		<exec executable="/usr/bin/curl" failonerror="true" logError="true">
+			<arg line='-u ${artifactory.user}:${artifactory.password} -T ${env.WORKSPACE}/builtbar/${deployenvironment}_${barNameID} --header "X-Checksum-MD5:${CHECKSUM}" "http://${artifactory.host}:${artifactory.port}${artifactory.baseurl}${deployenvironment}/${IIBsvr}/${deployenvironment}_${barNameID}"' />
+		</exec>
+		
+		
+	</target>
+</project>
+
+	

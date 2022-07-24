@@ -1,0 +1,146 @@
+<project name="IIB-CI-MAIN" default="dev" basedir="." >
+	<description>IIB Continuous Integration bamboo deploy plan</description>
+	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+	<macrodef name="getEnv">
+		<attribute name="text"/>
+		<sequential>
+			<property name="IIBnode" value="${@{text}.brokerName}" />
+			<property name="IIBsvr" value="${@{text}.exGroupName}" />
+			<property name="IIBconn" value="${@{text}.conn}" />
+			<property name="IIBenableMon" value="${@{text}.monitoring}" />
+		</sequential>
+	</macrodef>
+	<target name="init">
+		<tstamp />
+		<property environment="env" />
+		<property name="path.build" value="Build" />
+		<!--<property file="${path.build}/build_ASP_NotifyPlanning_Schedule_SAPAGI_APP.properties" />-->
+		<!--<property file="../Build/build_${arg0}.properties" />-->
+		<property file="${env.bamboo_working_directory}/Build/build_${env.bamboo_shortPlanName}.properties" />
+		<!--  change developement to DEV-->
+		<if>
+			<equals arg1="${env.bamboo_deploy_environment}" arg2="Development" />
+			<then>
+				<echo>set env to DEV</echo>
+				<property name="deployenvironment" value="DEV" />
+			</then>
+			<else>
+			<!--  change PRE_PROD to PRE-->
+				<if>
+					<equals arg1="${env.bamboo_deploy_environment}" arg2="PRE_PROD" />
+					<then>
+						<echo>set env to PRE</echo>
+						<property name="deployenvironment" value="PRE" />
+					</then>
+					<else>
+						<property name="deployenvironment" value="${env.bamboo_deploy_environment}" />
+					</else>
+				</if>
+		
+			</else>
+		</if>
+		
+
+		<property file="artifactory.properties" />
+		<getEnv  text="${deployenvironment}"/>
+		<echo>deploy script for deploying ${env.bamboo_deploy_project} to exgroup ${IIBsvr} to environment ${deployenvironment}</echo>
+		<echo>${IIBnode} ${IIBsvr} ${IIBconn}</echo>
+	</target>
+
+	<target name="dev" depends="init">
+
+
+		<exec executable="git" outputproperty="git.revision">
+			<arg value="rev-parse" />
+			<arg value="--short" />
+			<arg value="HEAD" />
+		</exec>
+		<tstamp>
+			<format property="TIME_RSA" pattern="yyyyMMddHHmm"/>
+		</tstamp>
+
+
+		<fileset dir="${env.bamboo_working_directory}/builtbar" id= "barId" >
+			<!--<fileset dir="../builtbar" id= "barId" >-->
+			<include name= "20*.bar" />
+		</fileset >
+		<property name= "barNameID" refid= "barId" />
+		<echo message="${barNameID}"/>
+
+		<copy file="${env.bamboo_working_directory}/builtbar/${barNameID}" tofile="${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID}"/>
+
+		<fileset dir="${env.bamboo_working_directory}/builtbar" id="barname">
+			<include name="${deployenvironment}*${env.bamboo_shortPlanName}*.bar"/>
+		</fileset>
+		<pathconvert pathsep="," property="my_file" refid="barname"/>
+		<!--<echo message="${my_file}"/>-->
+
+		<fileset dir="." id="ovr">
+			<include name="baroverride.s*"/>
+		</fileset>
+		<pathconvert pathsep="," property="ovr_file" refid="ovr"/>
+		<!--<echo message="${my_file}"/>
+		<echo message="${ovr_file}"/>-->
+		<echo message="${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID}"/>
+		<echo message="${ovr_file}"/>
+		<echo message="over ride bar"/>
+		<echo>current directory: ${basedir}</echo>
+		<echo>${user.dir}</echo>
+		<echo>override properties file ${env.bamboo_working_directory}/Build/${deployenvironment}_${env.bamboo_deploy_project}.properties</echo>
+
+		<fail message="file ${env.bamboo_working_directory}/Build/${deployenvironment}_${env.bamboo_shortPlanName}.properties not set or missing">
+			<condition>
+				<not>
+					<available file="${env.bamboo_working_directory}/Build/${deployenvironment}_${env.bamboo_shortPlanName}.properties" />
+				</not>
+			</condition>
+		</fail>
+
+		<exec executable="/opt/mqsi/10.0.0.17/server/bin/mqsiapplybaroverride" failonerror="true"  error="error overriding UDP to bar file">
+			<arg value="-b"/>
+			<arg value="${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID}"/>
+			<arg value="-p"/>
+			<arg value="${env.bamboo_working_directory}/Build/${deployenvironment}_${env.bamboo_shortPlanName}.properties"/>
+			<arg value="-r"/>
+		</exec>
+
+		<fileset dir="." id="dpl">
+			<include name="deploybar.sh"/>
+		</fileset>
+		<pathconvert pathsep="," property="dpl_file" refid="dpl"/>
+		<fileset dir="." id="brk">
+			<include name="${IIBnode}.broker"/>
+		</fileset>
+		<pathconvert pathsep="," property="brk_file" refid="brk"/>
+		<echo>${IIBnode} ${IIBsvr} ${IIBconn} ${my_file} ${brk_file}</echo>
+		<exec executable="/opt/mqsi/10.0.0.17/server/bin/mqsideploy" failonerror="true"  error="error deploying bar file to ${IIBnode} ${IIBsvr}">
+			<!--<arg value="${IIBnode}"/>-->
+			<arg value="-e"/>
+			<arg value="${IIBsvr}"/>
+			<arg value="-a"/>
+			<arg value="${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID}"/>
+			<arg value="-n"/>
+			<arg value="${brk_file}"/>
+			<arg value="-w"/>
+			<arg value="600"/>
+		</exec>
+		<xmlproperty file="${brk_file}" collapseAttributes="true"/>
+		<if>
+			<equals arg1="${IIBenableMon}" arg2="enable"/>
+			<then>
+				<echo> Enable monitoring tag is set : Running Curl:</echo>
+				<echo> curl -I -X PUT -u ${IntegrationNodeConnectionParameters.userName}:${IntegrationNodeConnectionParameters.password} -v http://${IntegrationNodeConnectionParameters.host}:${IntegrationNodeConnectionParameters.listenerPort}/apiv1/executiongroups/${IIBsvr}/applications/${iib.minusA}?action=startFlowMonitoring </echo>
+				<exec executable="/usr/bin/curl" failonerror="true" logError="true">
+					<arg line=' -I -X PUT -u ${IntegrationNodeConnectionParameters.userName}:${IntegrationNodeConnectionParameters.password} -v http://${IntegrationNodeConnectionParameters.host}:${IntegrationNodeConnectionParameters.listenerPort}/apiv1/executiongroups/${IIBsvr}/applications/${iib.minusA}?action=startFlowMonitoring ' />
+				</exec>
+			</then>
+		</if>
+
+		<checksum file="${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID}" property="CHECKSUM"/>
+		<echo>' -u ${artifactory.user}:${artifactory.password} -T ${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID} --header "X-Checksum-MD5:${CHECKSUM}" "http://${artifactory.host}:${artifactory.port}${artifactory.baseurl}${deployenvironment}/${IIBsvr}/${deployenvironment}_${barNameID}"'</echo>
+		<exec executable="/usr/bin/curl" failonerror="true" logError="true">
+			<arg line=' -u ${artifactory.user}:${artifactory.password} -T ${env.bamboo_working_directory}/builtbar/${deployenvironment}_${barNameID} --header "X-Checksum-MD5:${CHECKSUM}" "http://${artifactory.host}:${artifactory.port}${artifactory.baseurl}${deployenvironment}/${IIBsvr}/${deployenvironment}_${barNameID}"' />
+		</exec>
+	
+	</target>
+</project>

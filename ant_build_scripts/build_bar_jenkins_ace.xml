@@ -1,0 +1,132 @@
+<project name="IIB-CI-MAIN" default="buildbar" basedir="../..">
+	<description>IIB Continuous Integration (main script)</description>
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+	<target name="init">
+		<tstamp/>
+		<property environment="env"/>
+		<property name="path.build" value="Build"/>
+		<echo>Build script for creating bar file for ${env.JOB_NAME}</echo>
+		<echo>Build script working directory: ${env.WORKSPACE}</echo>
+		<echo>Build buildKey: ${env.BUILD_ID}</echo>
+		<echo>Build Number: ${env.BUILD_NUMBER}</echo>
+		<loadresource property="jobWithoutFolder">
+			<concat>${env.JOB_NAME}</concat>
+			<filterchain>
+				<replaceregex pattern="^^[a-zA-Z]+-[a-zA-Z]+/" replace=""/>
+			</filterchain>
+		</loadresource>
+		<loadresource property="appName">
+			<concat>${jobWithoutFolder}</concat>
+			<filterchain>
+				<replaceregex pattern="^[a-zA-Z]+_" replace=""/>
+			</filterchain>
+		</loadresource>
+		<loadresource property="deployenvironment">
+			<concat>${jobWithoutFolder}</concat>
+			<filterchain>
+				<replaceregex pattern="_${appName}" replace=""/>
+			</filterchain>
+		</loadresource>
+		<echo>${jobWithoutFolder}</echo>
+		<echo>${deployenvironment}</echo>
+		<echo>${env.WORKSPACE}\Build\build_${jobWithoutFolder}.properties</echo>
+		<property file="${env.WORKSPACE}\Build\build_${jobWithoutFolder}.properties"/>
+		
+		<property name="iibTools" value="/opt/ace-12.0.1.0/tools"/>
+		
+	</target>
+	<target name="buildbar" depends="init">
+	<!-- copy the common code out to the same dir as the apps -->
+		<copy todir="${env.WORKSPACE}">
+			<fileset dir="${env.WORKSPACE}/common/" includes="**"/>
+		</copy>
+		<exec executable="git" outputproperty="git.revision">
+			<arg value="rev-parse"/>
+			<arg value="--short"/>
+			<arg value="HEAD"/>
+		</exec>
+		<tstamp>
+			<format property="TIME_RSA" pattern="yyyyMMddHHmm"/>
+		</tstamp>
+		
+		<!-- basiclly check if the library tag is set if so build with the library else build without the -l (L) tag -->
+		<!-- build workspace and create BAR file -->
+		
+		<delete dir="keywords.txt"/>
+		<property name="FinalBarFileName" value="B${env.BUILD_ID}_${TIME_RSA}_${iib.bar}_${git.revision}.bar"/>
+		<echo>Final bar file name ${FinalBarFileName}</echo>
+		<property name="tempBarFileName" value="B${env.BUILD_ID}_${iib.bar}.bar"/>
+		<echo file="keywords.txt" append="true">$MQSI BuildNumber=${env.BUILD_ID} MQSI$</echo>
+		<echo file="keywords.txt" append="true">${line.separator}$MQSI BuildTime=${TIME_RSA} MQSI$</echo>
+		<echo file="keywords.txt" append="true">${line.separator}$MQSI BuildGitRevision=${git.revision} MQSI$</echo>
+		<echo file="keywords.txt" append="true">${line.separator}$MQSI BuildURL=${env.BUILD_URL} MQSI$</echo>
+		<echo file="keywords.txt" append="true">${line.separator}$MQSI BarFileName=${FinalBarFileName} MQSI$</echo>
+		<if>
+			<not>
+				<isset property="iib.minusl"/>
+			</not>
+			<then>
+				<!-- build workspace and create BAR file -->
+				<echo>building bar ${tempBarFileName}</echo>
+				<echo>without a library</echo>
+				
+				<exec executable="${iibTools}\mqsicreatebar">
+					<arg value="-data"/>
+					<arg value="${env.WORKSPACE}"/>
+					<arg value="-b"/>
+					<arg value="${tempBarFileName}"/>
+					<arg value="-a"/>
+					<arg value="${iib.minusA}"/>
+					<arg value="-deployAsSource"/>
+					<!-- we cannot inline artifacts in a shared library -->
+					<arg value="-cleanBuild"/>
+				</exec>
+			</then>
+		</if>
+		<if>
+			<isset property="iib.minusl"/>
+			<then>
+				<echo>building bar ${tempBarFileName}</echo>
+				<echo>with library ${iib.minusl}</echo>
+				
+				<exec executable="${iibTools}\mqsicreatebar">
+					<arg value="-data"/>
+					<arg value="${basedir}"/>
+					<arg value="-b"/>
+					<arg value="${tempBarFileName}"/>
+					<arg value="-a"/>
+					<arg value="${iib.minusA}"/>
+					<arg value="-l"/>
+					<arg value="${iib.minusl}"/>
+					<arg value="-deployAsSource"/>
+					<!-- we cannot inline artifacts in a shared library -->
+					<arg value="-cleanBuild"/>
+				</exec>
+			</then>
+		</if>
+		
+		<echo>Put Keywords in the Bar File</echo>
+		
+		<mkdir dir=".\zip"/>
+		<unzip src="${tempBarFileName}" dest=".\zip\"/>
+		<unzip src=".\zip\${jobWithoutFolder}.appzip" dest=".\zip\${jobWithoutFolder}\"/>
+		<copy file="keywords.txt" tofile=".\zip\META-INF\keywords.txt"/>
+		<copy file="keywords.txt" tofile=".\zip\${jobWithoutFolder}\META-INF\keywords.txt"/>
+		<zip destfile=".\zip\${jobWithoutFolder}.appzip" basedir=".\zip\${jobWithoutFolder}" update="true"/>
+		<delete dir=".\zip\${jobWithoutFolder}"/>
+		<zip destfile="${FinalBarFileName}" basedir=".\zip"/>
+		<delete dir=".\zip"/>
+		<delete file=".\keywords.txt"/>
+		<delete file=".\${tempBarFileName}"/>
+		<mkdir dir=".\builtbar\archive\"/>
+		<move failonerror="false" verbose="true" todir=".\builtbar\archive\">
+			<fileset dir="./builtbar/" includes="*.bar"/>
+		</move>
+		
+		<!-- move the bar file to the built bar folder -->
+		<move failonerror="true" verbose="true" todir=".\builtbar\">
+			<fileset dir="." includes="${FinalBarFileName}"/>
+		</move>
+	</target>
+</project>
