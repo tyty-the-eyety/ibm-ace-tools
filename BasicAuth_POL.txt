@@ -1,0 +1,10 @@
+#!/bin/bash
+#basic auth from a local vault.
+#https://www.ibm.com/docs/en/app-connect/11.0.0?topic=ciastv-authenticating-incoming-requests-by-using-credentials-stored-in-vault
+#stop the ace
+mqsistop <ACE_NODE_NAME>
+mqsivault <ACE_NODE_NAME> --create --vault-key <VAULT-NAME(I like the name to be the same as the NODE)>
+--run and add this to .bashrc
+export MQSI_VAULT_KEY=<VAULT-NAME>
+mqsistart <ACE_NODE_NAME>
+mqsicredentials <ACE_NODE_NAME> --create --vault-key <VAULT-NAME> --credential-type local --credential-name BasicAuth<SYSTEM/USERNAME> --username USERNAME --password <PASSWORD>  -e <EX-GROUP>
