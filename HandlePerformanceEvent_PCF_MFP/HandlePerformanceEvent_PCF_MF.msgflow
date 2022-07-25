@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmEmailOutput.msgnode="ComIbmEmailOutput.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="HandlePerformanceEvent_PCF_MF.msgflow" nsPrefix="HandlePerformanceEvent_PCF_MF.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.recipient" name="recipient" lowerBound="1" defaultValueLiteral="user@user.com">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="HandlePerformanceEvent_PCF_MF" bundleName="HandlePerformanceEvent_PCF_MF" pluginId="HandlePerformanceEvent_PCF_MFP"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/HandlePerformanceEvent_PCF_MFP/icons/full/obj16/HandlePerformanceEvent_PCF_MF.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/HandlePerformanceEvent_PCF_MFP/icons/full/obj30/HandlePerformanceEvent_PCF_MF.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="126,191" queueName="SYSTEM.ADMIN.PERFM.EVENT">
+        <translation xmi:type="utility:ConstantString" string="SYSTEM.ADMIN.PERFM.EVENT"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="334,200" computeExpression="esql://routine/#HandlePerformanceEvent_PCF_MF.Main">
+        <translation xmi:type="utility:ConstantString" string="EmailEvent"/>
+      </nodes>
+      <nodes xmi:type="ComIbmEmailOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="609,290" smtpServer="smtp.server.com:25" fromAddress="user@user.com" bodyContentType="text/html">
+        <translation xmi:type="utility:ConstantString" string="Email Output"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.recipient">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.recipient" bundleName="HandlePerformanceEvent_PCF_MF" pluginId="HandlePerformanceEvent_PCF_MFP"/>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>
