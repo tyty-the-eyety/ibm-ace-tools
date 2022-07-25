@@ -1,0 +1,186 @@
+
+
+
+
+
+
+
+
+
+
+DECLARE isThisTheFirstFlowEntry SHARED BOOLEAN TRUE;
+DECLARE isThisTheFirstNodeEntry SHARED BOOLEAN TRUE;
+
+CREATE COMPUTE MODULE IIB_WMQIStatisticsAccounting_MF_Convert2File
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.Properties.MessageType = '{}:LIB_WMQIStatisticsAccountingFlow';
+		
+		DELETE FIELD InputRoot.MQRFH2;
+		
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'DFDL' NAME 'DFDL';
+		
+		DECLARE inMsg REFERENCE TO InputRoot.XMLNSC.WMQIStatisticsAccounting.MessageFlow;
+		DECLARE inNde REFERENCE TO InputRoot.XMLNSC.WMQIStatisticsAccounting.Nodes.NodeStatistics[1];
+		DECLARE inThrds REFERENCE TO InputRoot.XMLNSC.WMQIStatisticsAccounting.Threads;
+		DECLARE inTrm REFERENCE TO InputRoot.XMLNSC.WMQIStatisticsAccounting.Nodes.NodeStatistics[1].TerminalStatistics[1];
+		-- MAP FLOW STATS
+		IF isThisTheFirstFlowEntry IS TRUE THEN
+			CREATE FIELD OutputRoot.DFDL.LIB_WMQIStatisticsAccountingFlow.header;
+			DECLARE oHead REFERENCE TO OutputRoot.DFDL.LIB_WMQIStatisticsAccountingFlow.header;
+			SET oHead.RecordType = 'RecordType';
+			SET oHead.BrokerLabel = 'BrokerLabel';
+			SET oHead.BrokerUUID = 'BrokerUUID';
+			SET oHead.ExecutionGroupName = 'ExecutionGroupName';
+			SET oHead.ExecutionGroupUUID = 'ExecutionGroupUUID';
+			SET oHead.MessageFlowName = 'MessageFlowName';
+			SET oHead.StartDate = 'StartDate';
+			SET oHead.StartTime = 'StartTime';
+			SET oHead.EndDate = 'EndDate';
+			SET oHead.EndTime = 'EndTime';
+			SET oHead.TotalElapsedTime = 'TotalElapsedTime';
+			SET oHead.MaximumElapsedTime = 'MaximumElapsedTime';
+			SET oHead.MinimumElapsedTime = 'MinimumElapsedTime';
+			SET oHead.TotalCPUTime = 'TotalCPUTime';
+			SET oHead.MaximumCPUTime = 'MaximumCPUTime';
+			SET oHead.MinimumCPUTime = 'MinimumCPUTime';
+			SET oHead.CPUTimeWaitingForInputMessage = 'CPUTimeWaitingForInputMessage';
+			SET oHead.ElapsedTimeWaitingForInputMessage = 'ElapsedTimeWaitingForInputMessage';
+			SET oHead.TotalInputMessages = 'TotalInputMessages';
+			SET oHead.TotalSizeOfInputMessages = 'TotalSizeOfInputMessages';
+			SET oHead.MaximumSizeOfInputMessages = 'MaximumSizeOfInputMessages';
+			SET oHead.MinimumSizeOfInputMessages = 'MinimumSizeOfInputMessages';
+			SET oHead.NumberOfThreadsInPool = 'NumberOfThreadsInPool';
+			SET oHead.TimesMaximumNumberOfThreadsReached = 'TimesMaximumNumberOfThreadsReached';
+			SET oHead.TotalNumberOfMQErrors = 'TotalNumberOfMQErrors';
+			SET oHead.TotalNumberOfMessagesWithErrors = 'TotalNumberOfMessagesWithErrors';
+			SET oHead.TotalNumberOfErrorsProcessingMessages = 'TotalNumberOfErrorsProcessingMessages';
+			SET oHead.TotalNumberOfCommits = 'TotalNumberOfCommits';
+			SET oHead.TotalNumberOfBackouts = 'TotalNumberOfBackouts';
+			SET oHead.AccoutingOrigin = 'AccoutingOrigin';
+			SET isThisTheFirstFlowEntry = FALSE;
+			PROPAGATE TO TERMINAL 'out2';
+		END IF ;
+		
+		CREATE FIELD OutputRoot.DFDL.LIB_WMQIStatisticsAccountingFlow.record;
+		DECLARE oRec REFERENCE TO OutputRoot.DFDL.LIB_WMQIStatisticsAccountingFlow.record;
+		
+		SET oRec.RecordType = FIELDVALUE(InputRoot.XMLNSC.WMQIStatisticsAccounting.(XMLNSC.Attribute)RecordType);
+		SET oRec.BrokerLabel = FIELDVALUE(inMsg.(XMLNSC.Attribute)BrokerLabel);
+		SET oRec.BrokerUUID = FIELDVALUE(inMsg.(XMLNSC.Attribute)BrokerUUID);
+		SET oRec.ExecutionGroupName = FIELDVALUE(inMsg.(XMLNSC.Attribute)ExecutionGroupName);
+		SET oRec.ExecutionGroupUUID = FIELDVALUE(inMsg.(XMLNSC.Attribute)ExecutionGroupUUID);
+		SET oRec.MessageFlowName = FIELDVALUE(inMsg.(XMLNSC.Attribute)MessageFlowName);
+		SET oRec.StartDate = FIELDVALUE(inMsg.(XMLNSC.Attribute)StartDate);
+		SET oRec.StartTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)StartTime);
+		SET oRec.EndDate = FIELDVALUE(inMsg.(XMLNSC.Attribute)EndDate);
+		SET oRec.EndTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)EndTime);
+		SET oRec.TotalElapsedTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalElapsedTime);
+		SET oRec.MaximumElapsedTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)MaximumElapsedTime);
+		SET oRec.MinimumElapsedTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)MinimumElapsedTime);
+		SET oRec.TotalCPUTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalCPUTime);
+		SET oRec.MaximumCPUTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)MaximumCPUTime);
+		SET oRec.MinimumCPUTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)MinimumCPUTime);
+		SET oRec.CPUTimeWaitingForInputMessage = FIELDVALUE(inMsg.(XMLNSC.Attribute)CPUTimeWaitingForInputMessage);
+		SET oRec.ElapsedTimeWaitingForInputMessage = FIELDVALUE(inMsg.(XMLNSC.Attribute)ElapsedTimeWaitingForInputMessage);
+		SET oRec.TotalInputMessages = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalInputMessages);
+		SET oRec.TotalSizeOfInputMessages = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalSizeOfInputMessages);
+		SET oRec.MaximumSizeOfInputMessages = FIELDVALUE(inMsg.(XMLNSC.Attribute)MaximumSizeOfInputMessages);
+		SET oRec.MinimumSizeOfInputMessages = FIELDVALUE(inMsg.(XMLNSC.Attribute)MinimumSizeOfInputMessages);
+		SET oRec.NumberOfThreadsInPool = FIELDVALUE(inMsg.(XMLNSC.Attribute)NumberOfThreadsInPool);
+		SET oRec.TimesMaximumNumberOfThreadsReached = FIELDVALUE(inMsg.(XMLNSC.Attribute)TimesMaximumNumberOfThreadsReached);
+		SET oRec.TotalNumberOfMQErrors = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalNumberOfMQErrors);
+		SET oRec.TotalNumberOfMessagesWithErrors = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalNumberOfMessagesWithErrors);
+		SET oRec.TotalNumberOfErrorsProcessingMessages = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalNumberOfErrorsProcessingMessages);
+		SET oRec.TotalNumberOfCommits = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalNumberOfCommits);
+		SET oRec.TotalNumberOfBackouts = FIELDVALUE(inMsg.(XMLNSC.Attribute)TotalNumberOfBackouts);
+		IF FIELDVALUE(inMsg.(XMLNSC.Attribute)AccoutingOrigin) IS NULL THEN
+			SET oRec.AccoutingOrigin = 'Unknown';
+		ELSE
+			SET oRec.AccoutingOrigin = FIELDVALUE(inMsg.(XMLNSC.Attribute)AccoutingOrigin);
+		END IF;
+		PROPAGATE TO TERMINAL 'out2';
+		
+		
+		-- MAP NODE STATS
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'DFDL' NAME 'DFDL';
+		
+		IF isThisTheFirstNodeEntry IS TRUE THEN
+			CREATE FIELD OutputRoot.DFDL.LIB_WMQIStatisticsAccountingNode.header;
+			DECLARE oNdHead REFERENCE TO OutputRoot.DFDL.LIB_WMQIStatisticsAccountingNode.header;
+			SET oNdHead.RecordType = 'RecordType';
+			SET oNdHead.BrokerLabel = 'BrokerLabel';
+			SET oNdHead.BrokerUUID = 'BrokerUUID';
+			SET oNdHead.ExecutionGroupName = 'ExecutionGroupName';
+			SET oNdHead.ExecutionGroupUUID = 'ExecutionGroupUUID';
+			SET oNdHead.MessageFlowName = 'MessageFlowName';
+			SET oNdHead.StartDate = 'StartDate';
+			SET oNdHead.StartTime = 'StartTime';
+			SET oNdHead.EndDate = 'EndDate';
+			SET oNdHead.EndTime = 'EndTime';
+			SET oNdHead.Label = 'Label';
+			SET oNdHead.Type = 'Type';
+			SET oNdHead.TotalElapsedTime = 'TotalElapsedTime';
+			SET oNdHead.MaximumElapsedTime = 'MaximumElapsedTime';
+			SET oNdHead.MinimumElapsedTime = 'MinimumElapsedTime';
+			SET oNdHead.TotalCPUTime = 'TotalCPUTime';
+			SET oNdHead.MaximumCPUTime = 'MaximumCPUTime';
+			SET oNdHead.MinimumCPUTime = 'MinimumCPUTime';
+			SET oNdHead.CountOfInvocations = 'CountOfInvocations';
+			SET oNdHead.NumberOfInputTerminals = 'NumberOfInputTerminals';
+			SET oNdHead.NumberOfOutputTerminals= 'NumberOfOutputTerminals';
+			SET isThisTheFirstNodeEntry = FALSE;
+			PROPAGATE TO TERMINAL 'out1';
+		END IF ;
+		
+		-- need to loop around each node
+		WHILE LASTMOVE(inNde) = TRUE DO
+			CREATE FIELD OutputRoot.DFDL.LIB_WMQIStatisticsAccountingNode.record;		
+			DECLARE oNdRec REFERENCE TO OutputRoot.DFDL.LIB_WMQIStatisticsAccountingNode.record;
+			-- check if the node was even called , no point in logging empty rows :S
+			IF CAST(FIELDVALUE(inNde.(XMLNSC.Attribute)CountOfInvocations) AS INTEGER) > 0 THEN
+				SET oNdRec.RecordType = FIELDVALUE(InputRoot.XMLNSC.WMQIStatisticsAccounting.(XMLNSC.Attribute)RecordType);
+				SET oNdRec.BrokerLabel = FIELDVALUE(inMsg.(XMLNSC.Attribute)BrokerLabel);
+				SET oNdRec.BrokerUUID = FIELDVALUE(inMsg.(XMLNSC.Attribute)BrokerUUID);
+				SET oNdRec.ExecutionGroupName = FIELDVALUE(inMsg.(XMLNSC.Attribute)ExecutionGroupName);
+				SET oNdRec.ExecutionGroupUUID = FIELDVALUE(inMsg.(XMLNSC.Attribute)ExecutionGroupUUID);
+				SET oNdRec.MessageFlowName = FIELDVALUE(inMsg.(XMLNSC.Attribute)MessageFlowName);
+				SET oNdRec.StartDate = FIELDVALUE(inMsg.(XMLNSC.Attribute)StartDate);
+				SET oNdRec.StartTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)StartTime);
+				SET oNdRec.EndDate = FIELDVALUE(inMsg.(XMLNSC.Attribute)EndDate);
+				SET oNdRec.EndTime = FIELDVALUE(inMsg.(XMLNSC.Attribute)EndTime);
+
+				SET oNdRec.Label = FIELDVALUE(inNde.(XMLNSC.Attribute)Label);
+				SET oNdRec.Type = FIELDVALUE(inNde.(XMLNSC.Attribute)Type);
+				SET oNdRec.TotalElapsedTime = FIELDVALUE(inNde.(XMLNSC.Attribute)TotalElapsedTime);
+				SET oNdRec.MaximumElapsedTime = FIELDVALUE(inNde.(XMLNSC.Attribute)MaximumElapsedTime);
+				SET oNdRec.MinimumElapsedTime = FIELDVALUE(inNde.(XMLNSC.Attribute)MinimumElapsedTime);
+				SET oNdRec.TotalCPUTime = FIELDVALUE(inNde.(XMLNSC.Attribute)TotalCPUTime);
+				SET oNdRec.MaximumCPUTime = FIELDVALUE(inNde.(XMLNSC.Attribute)MaximumCPUTime);
+				SET oNdRec.MinimumCPUTime = FIELDVALUE(inNde.(XMLNSC.Attribute)MinimumCPUTime);
+				SET oNdRec.CountOfInvocations = FIELDVALUE(inNde.(XMLNSC.Attribute)CountOfInvocations);
+				SET oNdRec.NumberOfInputTerminals = FIELDVALUE(inNde.(XMLNSC.Attribute)NumberOfInputTerminals);
+				SET oNdRec.NumberOfOutputTerminals= FIELDVALUE(inNde.(XMLNSC.Attribute)NumberOfOutputTerminals);
+				PROPAGATE TO TERMINAL 'out1';
+			END IF ;
+			MOVE inNde NEXTSIBLING;
+		END WHILE;
+
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

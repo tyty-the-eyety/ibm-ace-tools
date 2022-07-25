@@ -1,0 +1,63 @@
+Enabling / Disabling FlowStats
+http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/an28420_.htm
+
+*Warning SnapShot Stats should not run for very long*
+
+Turn on the collection of archive statistics for message flow "MyFlow1" in integration server "EGRP2" for BrokerA, and at the same time modify the granularity of data that is to be collected (when next activated ) to include thread related data.
+mqsichangeflowstats BrokerA -a -e EGRP2 -f MyFlow1 -c active -n basic   
+
+Turn off the collection of archive statistics for message flow "MyFlow1" in integration server "EGRP2" for BrokerA, and at the same time modify the granularity of data that is to be collected (when next activated ) to include thread related data.
+mqsichangeflowstats BrokerA -a -e EGRP2 -f MyFlow1 -c inactive -n basic   
+
+Turn on the collection of archive statistics for BrokerA all Execution Groups All Flows
+mqsichangeflowstats BrokerA -a -g -j -c active -n basic  -o xml
+
+Turn Off the collection of archive statistics for BrokerA all Execution Groups All Flows
+mqsichangeflowstats BrokerA -a -g -j -c inactive -n basic
+
+Turn on snapshot data for all message flows in all integration servers for Broker A.
+mqsichangeflowstats BrokerA -s -g -j -c active -n basic
+
+Turn off snapshot data for all message flows in all integration servers for Broker A.
+mqsichangeflowstats BrokerA -s -g -j -c inactive -n basic
+
+Report Stats
+mqsireportflowstats BrokerA -s -a -g –j
+
+Change Achive Logging interval (60 min by default, below is to 30 min)
+mqsichangebroker BrokerA -v 30
+
+
+Subscribing to the Pulished message
+Messages are published to:
+$SYS/Broker/brokerName/StatisticsAccounting/recordType/integrationServerLabel/messageFlowLabel
+
+Create Queue on MQ
+runmqsc <QM_NAME> 
+"def ql('IIB_WMQIStatisticsAccounting')"
+
+Create Subscription [listens for all stats, all type/flow/ exgroups]
+{replace <BrokerName> with broker name OR # for all brokers}
+{replace QM_Name with QM name}
+"
+DEFINE SUB('IIB_FlowStats_Sub') + 
+       TOPICSTR('$SYS/Broker/<BrokerName>/StatisticsAccounting/#') +
+       TOPICOBJ('') +
+       DEST('IIB_WMQIStatisticsAccounting') +
+       DESTQMGR('QM_Name') +
+       PUBAPPID('') +
+       SELECTOR('') +
+       USERDATA('') +
+       PUBACCT(0000000000000000000000000000000000000000000000000000000000000000) + 
+       DESTCORL(000000000000000000000000000000000000000000000000) +
+       DESTCLAS(PROVIDED) +
+       EXPIRY(UNLIMITED) + 
+       PSPROP(MSGPROP) + 
+       PUBPRTY(ASPUB) +
+       REQONLY(NO) + 
+       SUBSCOPE(ALL) + 
+       SUBLEVEL(1) + 
+       VARUSER(ANY) +
+       WSCHEMA(TOPIC) +
+       REPLACE
+"
