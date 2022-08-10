@@ -1,0 +1,27 @@
+BROKER SCHEMA ESB_ErrorHandler_LIB
+
+DECLARE  nsSoap NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+
+CREATE COMPUTE MODULE ESB_SOAPFault_SF_buildSoapFault
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties = InputRoot.Properties;
+		
+		CREATE FIELD OutputRoot.XMLNSC.nsSoap:Envelope.nsSoap:Body.nsSoap:Fault;
+		DECLARE outFault REFERENCE TO OutputRoot.XMLNSC.nsSoap:Envelope.nsSoap:Body.nsSoap:Fault;
+		
+		DECLARE errorText CHARACTER;
+		DECLARE errorNumber INTEGER;
+		DECLARE details CHARACTER '';
+	  	DECLARE type CHARACTER '';
+		CALL getTheLastErrorNumberAndText(InputExceptionList, errorNumber, errorText, details , type);
+		
+		SET	outFault.faultcode = 'Server';
+		SET outFault.faultstring = CAST (errorNumber AS CHAR) || ' ' || errorText || ' ' || details  || ' ' || type  ||'.';
+		SET outFault.faultactor = InputRoot.HTTPInputHeader."X-Original-HTTP-Command";
+		
+		RETURN TRUE;
+	END;
+
+
+END MODULE;

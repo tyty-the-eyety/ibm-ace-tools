@@ -1,0 +1,16 @@
+
+-- Utils Esql, put functions that can be used for multiple projects in here
+BROKER SCHEMA ESB_ErrorHandler_LIB
+
+
+CREATE FUNCTION isNumeric(IN aValue CHARACTER)
+RETURNS BOOLEAN
+BEGIN
+
+	IF (CAST(aValue AS INTEGER DEFAULT 0)) = 0 THEN
+		RETURN FALSE;
+	ELSE
+		RETURN TRUE;
+	END IF;
+
+END;

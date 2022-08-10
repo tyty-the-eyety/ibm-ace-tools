@@ -1,0 +1,20 @@
+BROKER SCHEMA ESB_ErrorHandler_LIB
+
+
+CREATE COMPUTE MODULE ESB_SubmitError_SF_HandleMsgFailure
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties.CodedCharSetId = 1208;
+		SET OutputRoot.MQMD.CodedCharSetId = 1208;
+		SET OutputRoot.MQMD.Format = 'MQSTR';
+		
+		SET OutputRoot.XMLNSC.ErrorFailureMessage.ErrorTimeStamp = CURRENT_TIMESTAMP;
+		SET OutputRoot.XMLNSC.ErrorFailureMessage.OriginalMessage = ASBITSTREAM(InputBody);
+		SET OutputRoot.XMLNSC.ErrorFailureMessage.OriginalMQMD = ASBITSTREAM(InputRoot.MQMD);
+		SET OutputRoot.XMLNSC.ErrorFailureMessage.OriginalProperties = ASBITSTREAM(InputRoot.Properties);
+		
+		RETURN TRUE;
+	END;
+
+	
+END MODULE;

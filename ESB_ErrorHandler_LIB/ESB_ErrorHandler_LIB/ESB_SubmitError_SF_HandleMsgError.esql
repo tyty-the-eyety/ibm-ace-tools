@@ -1,0 +1,71 @@
+BROKER SCHEMA ESB_ErrorHandler_LIB
+
+DECLARE logInputMsg EXTERNAL CHARACTER 'Y';
+DECLARE throwAgain EXTERNAL CHARACTER 'Y';
+
+CREATE COMPUTE MODULE ESB_SubmitError_SF_HandleMsgError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties.CodedCharSetId = 1208;
+		SET OutputRoot.MQMD.CodedCharSetId = 1208;
+		SET OutputRoot.MQMD.Format = 'MQSTR';
+		SET OutputRoot.XMLNSC.ErrorMessage.ServiceInfo.ErrorTimeStamp = CURRENT_TIMESTAMP;
+		DECLARE outServInfo REFERENCE TO OutputRoot.XMLNSC.ErrorMessage.ServiceInfo;
+		SET outServInfo.BrokerName = BrokerName;
+		SET outServInfo.QueueManagerName = QueueManagerName;
+		SET outServInfo.ApplicationLabel = ApplicationLabel;
+		SET outServInfo.MessageFlowName = MessageFlowLabel;
+		SET outServInfo.ExecutionGroupName = ExecutionGroupLabel ;
+		SET outServInfo.ExecutionGroupLabel = ExecutionGroupName;
+		SET outServInfo.ProcessId = ProcessId;
+
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.Monitoring = Environment.Monitoring.EventCorrelation;
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.ExtraMsgInfo = Environment.ExtraMsgInfo;
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.SapIDocControlRecord = InputRoot.XMLNSC.(XML.Element)*.(XML.Element)*.SapIDocControlRecord;
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.ApplicationArea =  InputRoot.XMLNSC.(XML.Element)*.ApplicationArea;
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.MQMD = InputRoot.MQMD;
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.HTTPInputHeader = InputRoot.HTTPInputHeader;
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.Properties = InputRoot.Properties;		
+		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.LocalEnvironmentFile = InputLocalEnvironment.File;
+
+		
+		SET Environment.field = FIELDNAME(InputBody);
+
+		IF FIELDNAME(InputBody) IS NOT NULL AND logInputMsg = 'Y' THEN
+			SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.OriginalMessage = ASBITSTREAM(InputBody CCSID InputRoot.Properties.CodedCharSetId);
+		END IF;
+
+		DECLARE errorText CHARACTER;
+		DECLARE errorNumber INTEGER;
+		DECLARE details CHARACTER '';
+	  	DECLARE type CHARACTER '';
+		CALL getTheLastErrorNumberAndText(InputExceptionList, errorNumber, errorText, details , type);
+
+		SET OutputRoot.XMLNSC.ErrorMessage.ErrorInfo.Code = errorNumber;
+		DECLARE outErrorInfo REFERENCE TO OutputRoot.XMLNSC.ErrorMessage.ErrorInfo;		
+		SET outErrorInfo.Text = errorText;
+		SET outErrorInfo.Details = details;
+		SET outErrorInfo.AdditionalInfo = InputExceptionList;
+
+		PROPAGATE TO TERMINAL 'out' DELETE NONE;
+		
+		RETURN FALSE;
+	END;
+END MODULE;
+CREATE PROCEDURE getTheLastErrorNumberAndText(IN Tree REFERENCE,OUT num INTEGER, OUT text CHAR, OUT details CHARACTER , OUT type CHARACTER)
+
+BEGIN
+	DECLARE pointer REFERENCE TO Tree.*[1]; 
+	--DECLARE details CHARACTER '';
+	--DECLARE type CHARACTER '';
+	WHILE lastmove(pointer) DO
+		IF pointer.Number IS NOT NULL THEN
+			SET num = pointer.Number;
+			SET text = pointer.Text;
+			SET details = pointer.*[<].Text;
+			SET type = CAST(pointer.*[<].Type AS CHARACTER);
+		END IF;
+		MOVE pointer LASTCHILD;
+	END WHILE;
+
+END;
