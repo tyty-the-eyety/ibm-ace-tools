@@ -1,0 +1,23 @@
+
+--dbtable Mapping error
+CREATE COMPUTE MODULE mapError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF CONTAINS(InputRoot.HTTPInputHeader."Content-Type" , 'json') THEN
+			SET OutputRoot.Properties = InputRoot.Properties;
+			SET OutputRoot.JSON.Data.DB_TABLE.Response.Severity = 'Exception';
+			SET OutputRoot.JSON.Data.DB_TABLE.DB_TABLE.ExceptionMessages = Environment.ErrorHandling.ExceptionList;
+			SET OutputRoot.JSON.Data.DB_TABLE.DB_TABLE.ExceptionList = InputExceptionList;
+
+		ELSE
+			SET OutputRoot.Properties = InputRoot.Properties;
+			SET OutputRoot.XMLNSC.DB_TABLE.Response.Severity = 'Exception';
+			SET OutputRoot.XMLNSC.DB_TABLE.DB_TABLE.ExceptionMessages = Environment.ErrorHandling.ExceptionList;
+			SET OutputRoot.XMLNSC.DB_TABLE.DB_TABLE.ExceptionList = InputExceptionList;
+
+		END IF;
+		RETURN TRUE;
+	END;
+
+	
+END MODULE;

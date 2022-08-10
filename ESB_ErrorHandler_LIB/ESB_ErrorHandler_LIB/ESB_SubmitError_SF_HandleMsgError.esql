@@ -21,8 +21,6 @@ CREATE COMPUTE MODULE ESB_SubmitError_SF_HandleMsgError
 
 		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.Monitoring = Environment.Monitoring.EventCorrelation;
 		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.ExtraMsgInfo = Environment.ExtraMsgInfo;
-		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.SapIDocControlRecord = InputRoot.XMLNSC.(XML.Element)*.(XML.Element)*.SapIDocControlRecord;
-		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.ApplicationArea =  InputRoot.XMLNSC.(XML.Element)*.ApplicationArea;
 		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.MQMD = InputRoot.MQMD;
 		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.HTTPInputHeader = InputRoot.HTTPInputHeader;
 		SET OutputRoot.XMLNSC.ErrorMessage.MessageInfo.Properties = InputRoot.Properties;		

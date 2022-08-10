@@ -1,0 +1,63 @@
+DECLARE qry EXTERNAL CHARACTER 'SELECT * FROM TABLE_SCHEMA.VALUE_TABLE'; 
+
+--dbtable mapping
+CREATE COMPUTE MODULE getValueMaps
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		DECLARE x ROW  PASSTHRU(qry);
+
+		DECLARE numCols INT CARDINALITY(x.Value[1].*[]);
+		DECLARE numRows INT CARDINALITY(x.Value[]);
+
+
+		DECLARE csvString CHAR '' || CAST(x'0D' AS CHAR CCSID InputRoot.Properties.CodedCharSetId);
+
+		DECLARE i INT 1;
+
+		IF CONTAINS(InputRoot.HTTPInputHeader."Content-Type" , 'text/xml') THEN
+			SET OutputRoot.XMLNSC.DB_TABLE.Response.NumberOfColumns = numCols;
+			SET OutputRoot.XMLNSC.DB_TABLE.Response.NumberOfRows = numRows;
+			SET i = 1;
+			FOR s AS x.Value[] DO
+				SET OutputRoot.XMLNSC.DB_TABLE.Response.Values[i] = s;
+				SET i = i + 1;
+			END FOR;
+		END IF;
+
+		IF CONTAINS(InputRoot.HTTPInputHeader."Content-Type" , 'json') THEN
+			SET OutputRoot.JSON.Data.DB_TABLE.Response.NumberOfColumns = numCols;
+			SET OutputRoot.JSON.Data.DB_TABLE.Response.NumberOfRows = numRows;
+			SET i = 1;
+			FOR s AS x.Value[] DO
+				SET OutputRoot.JSON.Data.DB_TABLE.Response.Values[i] = s;
+				SET i = i + 1;
+			END FOR;
+		END IF;
+		IF InputRoot.HTTPInputHeader."Content-Type" IS NULL THEN
+			SET OutputRoot.Properties = InputRoot.Properties;
+			SET OutputRoot.HTTPReplyHeader = InputRoot.HTTPInputHeader;
+			SET OutputRoot.HTTPReplyHeader."Content-Type" = 'text/html';
+			SET OutputRoot.XMLNSC.html.head.style = 'table, th, td {border: 1px solid black;border-collapse: collapse;}';
+			SET OutputRoot.XMLNSC.html.body.h4[1] = 'NumberOfColumns = ' || CAST(numCols AS CHAR);
+			SET OutputRoot.XMLNSC.html.body.h4[2] = 'NumberOfRows = ' || CAST(numRows AS CHAR);
+			WHILE i <= numCols DO
+				SET OutputRoot.XMLNSC.html.body.table.tr.th[i] = FIELDNAME(x.Value[1].*[i]);
+				SET i = i + 1;
+			END WHILE;
+			
+			DECLARE k INTEGER 2;
+			FOR s AS x.Value[] DO
+				DECLARE j INTEGER 1;
+				WHILE j <= numCols DO
+					SET OutputRoot.XMLNSC.html.body.table.tr[k].th[j] = s.*[j];
+					SET j = j + 1;
+				END WHILE;
+				SET k = k + 1;
+			END FOR;
+		END IF;
+		RETURN TRUE;
+	END;
+
+	
+END MODULE;
