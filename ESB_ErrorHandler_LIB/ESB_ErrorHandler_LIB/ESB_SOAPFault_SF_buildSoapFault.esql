@@ -7,6 +7,8 @@ CREATE COMPUTE MODULE ESB_SOAPFault_SF_buildSoapFault
 	BEGIN
 		SET OutputRoot.Properties = InputRoot.Properties;
 		
+		SET OutputLocalEnvironment.Destination.SOAP.Reply.Transport.HTTP.ReplyStatusCode = 500;
+		
 		CREATE FIELD OutputRoot.XMLNSC.nsSoap:Envelope.nsSoap:Body.nsSoap:Fault;
 		DECLARE outFault REFERENCE TO OutputRoot.XMLNSC.nsSoap:Envelope.nsSoap:Body.nsSoap:Fault;
 		

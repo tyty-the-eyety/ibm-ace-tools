@@ -1,0 +1,19 @@
+
+
+CREATE COMPUTE MODULE createTriggerMessage
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		SET OutputRoot.Properties.CodedCharSetId = 1208;
+		SET OutputRoot.MQMD.CodedCharSetId = 1208;
+		-- Depending on your flow, you might not want to trigger later
+		-- so expire the msg on the queue
+		SET OutputRoot.MQMD.Expiry = 1000;
+		
+		SET OutputRoot.XMLNSC.TriggerMessage.Trigger = 'TRUE';
+		
+		RETURN TRUE;
+	END;
+
+	
+END MODULE;

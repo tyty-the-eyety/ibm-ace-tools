@@ -1,0 +1,40 @@
+DECLARE RunTime EXTERNAL CHARACTER '07:30:00';
+
+CREATE COMPUTE MODULE SetTimeOut
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		/*
+		this is what the timeout xml should looke like
+		<TimeoutRequest>
+			<Action>SET | CANCEL</Action>
+			<Identifier>String (any alphanumeric string)</Identifier>
+			<StartDate>String (TODAY | yyyy-mm-dd)</StartDate>
+			<StartTime>String (NOW | hh:mm:ss)</StartTime>
+			<Interval>Integer (seconds)</Interval> Set this element to an integer that specifies the number of seconds between propagations of the message. The default value is 0.
+			<Count>Integer (greater than 0 or -1)</Count> Set this element to an integer value that is either greater than 0 or is -1 (which specifies a timeout request that never expires). The default value is 1.
+			<IgnoreMissed>TRUE | FALSE</IgnoreMissed> Set this element to TRUE or FALSE to control whether timeouts that occur while either the broker or the timeout notification flow is stopped, are processed the next time that the broker or timeout notification flow is started. 
+			<AllowOverwrite>TRUE | FALSE</AllowOverwrite>
+		</TimeoutRequest>
+		*/
+		DECLARE runDate CHARACTER 'TODAY';
+		DECLARE nowTime TIME CURRENT_TIME;
+		IF nowTime > CAST(RunTime AS TIME FORMAT 'hh:mm:ss') THEN
+			SET runDate = CAST((CURRENT_DATE + INTERVAL '1' DAY) AS CHARACTER FORMAT 'yyyy-MM-dd');
+		END IF;
+		
+		SET OutputRoot.MQMD.Format = 'MQSTR';
+		SET OutputRoot.MQMD.Version = 2;
+		SET OutputRoot.MQMD.MsgType = 8;
+		SET OutputRoot.XMLNSC.TimeoutRequest.Action = 'SET';
+		DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.TimeoutRequest;
+		SET outRef.Identifier = 'startTime';
+		SET outRef.StartDate = runDate;--'TODAY';
+		SET outRef.StartTime = RunTime;
+		SET outRef.Interval = 0;
+		SET outRef.Count = 1;
+		SET outRef.IgnoreMissed = 'TRUE';
+		SET outRef.AllowOverwrite = 'TRUE';
+		RETURN TRUE;
+	END;
+
+END MODULE;

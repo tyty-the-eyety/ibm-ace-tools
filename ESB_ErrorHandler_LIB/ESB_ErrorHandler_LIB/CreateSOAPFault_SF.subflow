@@ -12,13 +12,17 @@
       <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="416,62">
         <translation xmi:type="utility:TranslatableString" key="OutTerminal.Output" bundleName="ESB_ErrorHandler_LIB/CreateSOAPFault_SF" pluginId="ESB_ErrorHandler_LIB"/>
       </nodes>
-      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="227,74" computeExpression="esql://routine/ESB_ErrorHandler_LIB#ESB_SOAPFault_SF_buildSoapFault.Main">
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="227,74" computeExpression="esql://routine/ESB_ErrorHandler_LIB#ESB_SOAPFault_SF_buildSoapFault.Main" computeMode="destinationAndMessage">
         <translation xmi:type="utility:ConstantString" string="buildSoapFault"/>
       </nodes>
       <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
       <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
     </composition>
     <propertyOrganizer/>
-    <stickyBoard/>
+    <stickyBoard>
+      <stickyNote location="380,272">
+        <body xmi:type="utility:ConstantString" string="So this subflow will create a valid SOAP fault message and sets the http response code to 500.&#xA;Note that the response will work with SOAP nodes, will need to change the output local env for http nodes.&#xA;I did not need it so i did not do it, i guess you could query the the local environment to do an if statement to check&#xA;if it is http or soap. But why bother for me right now."/>
+      </stickyNote>
+    </stickyBoard>
   </eClassifiers>
 </ecore:EPackage>
