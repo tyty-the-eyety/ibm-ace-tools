@@ -4,6 +4,7 @@ CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_stopLoop
 	CREATE FUNCTION Main() RETURNS BOOLEAN
 	BEGIN
 		-- no more messages in the queue stop looping
+		CALL quickSort( Environment.queues, 'queue', 'currentDepth', '', FALSE );
 		SET Environment.looper = FALSE;		
 		SET OutputRoot.HTTPReplyHeader = Environment.httpHeader;
 		IF Environment.responseType = 'XML' THEN

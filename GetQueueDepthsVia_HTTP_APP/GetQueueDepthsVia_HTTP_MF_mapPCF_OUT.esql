@@ -11,22 +11,16 @@ CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_mapPCF_OUT
 
 			DECLARE currentDepth CHARACTER pPointer.Parameter[3].*;
 			DECLARE maxDepth CHARACTER pPointer.Parameter[4].*;
-			--CREATE LASTCHILD OF Environment.pPointer NAME 'queues';
-
-			CREATE LASTCHILD OF Environment.queues NAME 'queue';
-			MOVE qs TO Environment.queues.*[<];
-			SET qs.queueName = TRIM(qName);
-			SET qs.currentDepth = currentDepth;
-			SET qs.maxDepth = maxDepth;
-			SET qs.percentagefull = (CAST(currentDepth AS DECIMAL) / CAST(maxDepth AS DECIMAL)) * 100;
-			--SET Environment.T.queues[Environment.numberOfQs].queueName = TRIM(qName);
-			--SET Environment.T.queues[Environment.numberOfQs].currentDepth = currentDepth;
-			--SET Environment.T.queues[Environment.numberOfQs].maxDepth = maxDepth;
-			--SET Environment.T.queues[Environment.numberOfQs].BrokerName = BrokerName;
-			--SET Environment.T.queues[Environment.numberOfQs].QueueManagerName = QueueManagerName;
-
-			SET Environment.numberOfQs = Environment.numberOfQs +1;
+			IF maxDepth IS NOT NULL THEN
+				CREATE LASTCHILD OF Environment.queues NAME 'queue';
+				MOVE qs TO Environment.queues.*[<];
+				SET qs.queueName = TRIM(qName);
+				SET qs.currentDepth = currentDepth;
+				SET qs.maxDepth = maxDepth;
+				SET qs.percentagefull = (CAST(currentDepth AS DECIMAL) / CAST(maxDepth AS DECIMAL)) * 100;
 			
+				SET Environment.numberOfQs = Environment.numberOfQs +1;
+			END IF;
 		END IF;
 		IF Environment.Loop = FALSE THEN
 			PROPAGATE TO TERMINAL 'out';
