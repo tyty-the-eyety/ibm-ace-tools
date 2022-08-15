@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmWSInput.msgnode="ComIbmWSInput.msgnode" xmlns:ComIbmWSReply.msgnode="ComIbmWSReply.msgnode" xmlns:ESB_ErrorHandler_LIB_StoreErrorStackTrace2Queue_SF.subflow="ESB_ErrorHandler_LIB/StoreErrorStackTrace2Queue_SF.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="GetQueueDepthsVia_HTTP_MF.msgflow" nsPrefix="GetQueueDepthsVia_HTTP_MF.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" nodeLayoutStyle="RECTANGLE">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <translation xmi:type="utility:TranslatableString" key="GetQueueDepthsVia_HTTP_MF" bundleName="GetQueueDepthsVia_HTTP_MF" pluginId="GetQueueDepthsVia_HTTP_APP"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/GetQueueDepthsVia_HTTP_APP/icons/full/obj16/GetQueueDepthsVia_HTTP_MF.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/GetQueueDepthsVia_HTTP_APP/icons/full/obj30/GetQueueDepthsVia_HTTP_MF.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmWSInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="-5,209" URLSpecifier="/get/queue/depths" parseQueryString="true">
+        <translation xmi:type="utility:ConstantString" string="/get/queue/depths"/>
+      </nodes>
+      <nodes xmi:type="ComIbmWSReply.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="1244,209">
+        <translation xmi:type="utility:ConstantString" string="HTTP Reply"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="404,209" queueName="SYSTEM.ADMIN.COMMAND.QUEUE" newMsgId="true">
+        <translation xmi:type="utility:ConstantString" string="SYSTEM.ADMIN.COMMAND.QUEUE"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="194,209" computeExpression="esql://routine/#GetQueueDepthsVia_HTTP_MF_mapPCF_IN.Main">
+        <translation xmi:type="utility:ConstantString" string="mapPCF_IN"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="1034,209" computeExpression="esql://routine/#GetQueueDepthsVia_HTTP_MF_mapPCF_OUT.Main">
+        <translation xmi:type="utility:ConstantString" string="mapPCF_OUT"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="614,209" computeExpression="esql://routine/#GetQueueDepthsVia_HTTP_MF_loopGetAll.Main">
+        <translation xmi:type="utility:ConstantString" string="loopGetAll"/>
+      </nodes>
+      <nodes xmi:type="ESB_ErrorHandler_LIB_StoreErrorStackTrace2Queue_SF.subflow:FCMComposite_1" xmi:id="FCMComposite_1_8" location="193,54">
+        <translation xmi:type="utility:ConstantString" string="StoreErrorStackTrace2Queue_SF"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="825,213" queueName="Q_MONITOR_PCF_IN" transactionMode="no" inputMQMDLocation="Environment.MQMD" getWithCorrelID="true">
+        <translation xmi:type="utility:ConstantString" string="Q_MONITOR_PCF_IN"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="1054,365" computeExpression="esql://routine/#GetQueueDepthsVia_HTTP_MF_stopLoop.Main">
+        <translation xmi:type="utility:ConstantString" string="stopLoop"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="571,59" computeExpression="esql://routine/#GetQueueDepthsVia_HTTP_MF_sendError.Main">
+        <translation xmi:type="utility:ConstantString" string="sendError"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input1"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.noMessage" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out4" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.Output1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer/>
+    <stickyBoard>
+      <stickyNote location="407,268">
+        <body xmi:type="utility:ConstantString" string="This Flow will get queue depths of the local Node MQ.&#xA;Will get XML , JSON or a web page table back. use the queue x-query to &#xA;narrow down list retured, without x-query will get all queues&#xA;http://localhost:7080/get/queue/depths?queue=ERROR*"/>
+      </stickyNote>
+    </stickyBoard>
+  </eClassifiers>
+</ecore:EPackage>

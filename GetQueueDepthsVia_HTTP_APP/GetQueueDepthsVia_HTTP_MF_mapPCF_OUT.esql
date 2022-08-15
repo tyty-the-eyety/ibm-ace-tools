@@ -1,0 +1,38 @@
+
+-- format comment
+CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_mapPCF_OUT
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE pPointer REFERENCE TO InputRoot.MQPCF;
+		
+		DECLARE qs REFERENCE TO OutputRoot.queues;
+		IF pPointer.CompCode = 0 AND pPointer.Parameter[1] = 2016 AND InputRoot.MQPCF.Command = MQCMD_INQUIRE_Q THEN -- no error and 2016 is a Q name
+			DECLARE qName CHARACTER pPointer.Parameter[1].*;
+
+			DECLARE currentDepth CHARACTER pPointer.Parameter[3].*;
+			DECLARE maxDepth CHARACTER pPointer.Parameter[4].*;
+			--CREATE LASTCHILD OF Environment.pPointer NAME 'queues';
+
+			CREATE LASTCHILD OF Environment.queues NAME 'queue';
+			MOVE qs TO Environment.queues.*[<];
+			SET qs.queueName = TRIM(qName);
+			SET qs.currentDepth = currentDepth;
+			SET qs.maxDepth = maxDepth;
+			SET qs.percentagefull = (CAST(currentDepth AS DECIMAL) / CAST(maxDepth AS DECIMAL)) * 100;
+			--SET Environment.T.queues[Environment.numberOfQs].queueName = TRIM(qName);
+			--SET Environment.T.queues[Environment.numberOfQs].currentDepth = currentDepth;
+			--SET Environment.T.queues[Environment.numberOfQs].maxDepth = maxDepth;
+			--SET Environment.T.queues[Environment.numberOfQs].BrokerName = BrokerName;
+			--SET Environment.T.queues[Environment.numberOfQs].QueueManagerName = QueueManagerName;
+
+			SET Environment.numberOfQs = Environment.numberOfQs +1;
+			
+		END IF;
+		IF Environment.Loop = FALSE THEN
+			PROPAGATE TO TERMINAL 'out';
+		END IF;
+		RETURN FALSE;
+	END;	
+
+
+END MODULE;

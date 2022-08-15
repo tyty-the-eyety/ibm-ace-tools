@@ -1,0 +1,16 @@
+
+--
+CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_loopGetAll
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		SET Environment.MQMD.MsgId = InputLocalEnvironment.WrittenDestination.MQ.DestinationData.msgId;
+		SET Environment.MQMD.CorrelId = InputLocalEnvironment.WrittenDestination.MQ.DestinationData.msgId;
+		-- loop till no more messages in the queue
+		WHILE Environment.looper = TRUE DO
+			PROPAGATE TO TERMINAL 'out4';
+		END WHILE;
+		--return false to not send out a message to out  
+		RETURN FALSE;
+	END;
+END MODULE;

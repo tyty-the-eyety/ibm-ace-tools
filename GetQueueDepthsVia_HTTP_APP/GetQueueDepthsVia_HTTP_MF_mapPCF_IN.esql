@@ -1,0 +1,63 @@
+
+--
+CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_mapPCF_IN
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- SET up environment
+		CREATE LASTCHILD OF Environment NAME 'queues';
+		SET Environment.httpHeader = InputRoot.HTTPInputHeader;
+		IF CONTAINS(InputRoot.HTTPInputHeader."Content-Type" , 'text/xml') THEN
+			SET Environment.responseType = 'XML';
+		ELSE 
+			IF CONTAINS(InputRoot.HTTPInputHeader."Content-Type" , 'json') THEN
+				SET Environment.responseType = 'JSON';
+			ELSE
+				SET Environment.responseType = 'NONE';
+			END IF;
+		END IF;
+		-- Create MQMD
+		CREATE NEXTSIBLING OF OutputRoot.Properties DOMAIN 'MQMD';
+		-- Create a Loop to pick up all the replies 
+		SET Environment.looper = TRUE; 
+		--Just a place holder 
+		SET Environment.numberOfQs = 1;
+		-- Set the message format in the MQMD 
+		CREATE NEXTSIBLING OF OutputRoot.MQMD DOMAIN 'MQADMIN' NAME 'MQPCF';
+		CREATE FIELD OutputRoot.MQPCF;
+		--Expire the messages
+		SET OutputRoot.Properties.ExpirationTime = 1240;
+		SET OutputRoot.Properties.ReplyProtocol = 'MQ';
+
+		SET OutputRoot.MQMD.MsgType = MQMT_REQUEST;
+		-- Set reply to q Q_MONITOR_PCF_IN
+		SET OutputRoot.MQMD.ReplyToQ = 'Q_MONITOR_PCF_IN';
+		--Expire the messages
+		SET OutputRoot.MQMD.Expiry = 600;
+
+		DECLARE refRequest REFERENCE TO OutputRoot;
+		MOVE refRequest TO OutputRoot.MQPCF;
+		-- Set the pcf message fields
+		SET refRequest.Type = MQCFT_COMMAND;
+		SET refRequest.StrucLength = MQCFH_STRUC_LENGTH;
+		SET refRequest.Version = MQCFH_CURRENT_VERSION;
+		SET refRequest.Command = MQCMD_INQUIRE_Q;
+		SET refRequest.MsgSeqNumber = 1;
+		SET refRequest.Control = MQCFC_LAST;
+		SET refRequest.ParameterCount = 4;
+		SET refRequest.Parameter[1] = MQCA_Q_NAME;
+		-- Set the queue name/ * means get all queues
+		IF InputLocalEnvironment.HTTP.Input.QueryString.queue IS NOT NULL THEN 
+			SET refRequest.Parameter[1].* = InputLocalEnvironment.HTTP.Input.QueryString.queue;
+		ELSE 
+			SET refRequest.Parameter[1].* = '*';
+		END IF;
+		SET refRequest.ParameterList[1] = MQIACF_Q_ATTRS;
+		-- get current and max queue depth, this way we can get a percentage 
+		SET refRequest.ParameterList[1].*[1] = MQIA_CURRENT_Q_DEPTH;
+		SET refRequest.ParameterList[1].*[2] = MQIA_MAX_Q_DEPTH;
+		RETURN TRUE;
+		
+	END;
+
+
+END MODULE;

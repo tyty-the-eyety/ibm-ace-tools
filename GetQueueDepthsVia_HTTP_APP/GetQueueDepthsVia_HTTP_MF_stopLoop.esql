@@ -1,0 +1,49 @@
+
+
+CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_stopLoop
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- no more messages in the queue stop looping
+		SET Environment.looper = FALSE;		
+		SET OutputRoot.HTTPReplyHeader = Environment.httpHeader;
+		IF Environment.responseType = 'XML' THEN
+			SET OutputRoot.XMLNSC.queues = Environment.queues;
+		ELSE 
+			IF Environment.responseType = 'JSON' THEN
+				SET OutputRoot.JSON.Data.queues = Environment.queues;
+			ELSE 
+				SET OutputRoot.HTTPReplyHeader."Content-Type" = 'text/html';
+				SET OutputRoot.XMLNSC.html.head.style = 'table, th, td {border: 1px solid black;border-collapse: collapse;}';
+				DECLARE i INTEGER 2;
+				SET OutputRoot.XMLNSC.html.body.table.tr.th[1] = 'queueName';
+				SET OutputRoot.XMLNSC.html.body.table.tr.th[2] = 'currentDepth';
+				SET OutputRoot.XMLNSC.html.body.table.tr.th[3] = 'maxDepth';
+				SET OutputRoot.XMLNSC.html.body.table.tr.th[4] = 'percentagefull';
+				
+				FOR source AS Environment.queues.queue[] DO
+					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[1] = source.queueName;
+					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[2] = COALESCE(source.currentDepth , 'N/A');
+					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[3] = COALESCE(source.maxDepth , 'N/A');
+					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4] = COALESCE(LEFT(CAST(source.percentagefull AS CHARACTER) , 5) , 'N/A');
+					SET i = i+1;
+				END FOR;
+				--SET OutputRoot.XMLNSC.queues = Environment.queues;
+			END IF;
+		END IF;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
