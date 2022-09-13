@@ -1,0 +1,97 @@
+
+--
+CREATE COMPUTE MODULE CreateCSV_DFDL_FROM_HeaderFields_MF_makeDFDL_XML
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		--parse the input blob
+		DECLARE s CHARACTER CAST(InputRoot.BLOB.BLOB AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+		--split the input message
+		CALL Split(s,Environment,',') ;
+
+		SET OutputRoot.Properties.CodedCharSetId = 1208;
+		SET OutputRoot.MQMD.CodedCharSetId = 1208;
+		-- Set up the csv name space
+		DECLARE xsd NAMESPACE 'http://www.w3.org/2001/XMLSchema';
+		DECLARE csv NAMESPACE 'http://www.ibm.com/dfdl/CommaSeparatedFormat';
+		DECLARE dfdl NAMESPACE 'http://www.ogf.org/dfdl/dfdl-1.0/';
+		DECLARE fn NAMESPACE 'http://www.w3.org/2005/xpath-functions';
+		DECLARE ibmSchExtn NAMESPACE 'http://www.ibm.com/dfdl/CommaSeparatedFormat';
+
+		SET OutputRoot.XMLNSC.xsd:schema.(XMLNSC.NamespaceDecl)xmlns:xsd = 'http://www.w3.org/2001/XMLSchema';
+		SET OutputRoot.XMLNSC.xsd:schema.(XMLNSC.NamespaceDecl)xmlns:csv = 'http://www.ibm.com/dfdl/CommaSeparatedFormat';
+		SET OutputRoot.XMLNSC.xsd:schema.(XMLNSC.NamespaceDecl)xmlns:dfdl = 'http://www.ogf.org/dfdl/dfdl-1.0/';
+		SET OutputRoot.XMLNSC.xsd:schema.(XMLNSC.NamespaceDecl)xmlns:fn = 'http://www.w3.org/2005/xpath-functions';
+		SET OutputRoot.XMLNSC.xsd:schema.(XMLNSC.NamespaceDecl)xmlns:ibmSchExtn = 'http://www.ibm.com/dfdl/CommaSeparatedFormat';
+
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:import.(XMLNSC.Attribute)namespace ='http://www.ibm.com/dfdl/CommaSeparatedFormat';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:import.(XMLNSC.Attribute)namespace ='IBMdefined/CommaSeparatedFormat.xsd';
+
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.(XMLNSC.Attribute)source = 'http://www.ogf.org/dfdl/';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.dfdl:format.(XMLNSC.Attribute)documentFinalTerminatorCanBeMissing = 'yes';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.dfdl:format.(XMLNSC.Attribute)encoding = '{$dfdl:encoding}';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.dfdl:format.(XMLNSC.Attribute)escapeSchemeRef = 'csv:CSVEscapeScheme';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.dfdl:format.(XMLNSC.Attribute)ref = 'csv:CommaSeparatedFormat';
+
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.(XMLNSC.Attribute)"ibmSchExtn:docRoot" = 'true';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.(XMLNSC.Attribute)"name" = 'changeNameHere';
+		
+		-- CREATE HEADER
+		DECLARE i INTEGER 1;
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.(XMLNSC.Attribute)"dfdl:separator" = '';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[1].(XMLNSC.Attribute)"dfdl:terminator" = '%CR;%LF;%WSP*;';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[1].(XMLNSC.Attribute)"name" = 'header';
+		FOR source AS Environment.Split.Array[] DO
+
+			SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[1].xsd:complexType.xsd:sequence.xsd:element[i].(XMLNSC.Attribute)default = 'header_value' || CAST(i AS CHAR ) || '_' ||source;
+			SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[1].xsd:complexType.xsd:sequence.xsd:element[i].(XMLNSC.Attribute)name = source;
+			SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[1].xsd:complexType.xsd:sequence.xsd:element[i].(XMLNSC.Attribute)type = 'xsd:string';
+			SET i = i +1;
+		END FOR;
+		-- END CREATE HEADER
+		--CREATE RECORD
+		SET i = 1;
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].(XMLNSC.Attribute)"dfdl:occursCountKind" = 'implicit';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].(XMLNSC.Attribute)"dfdl:terminator" = '%CR;%LF;%WSP*;';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].(XMLNSC.Attribute)"maxOccurs" = 'unbounded';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].(XMLNSC.Attribute)"name" = 'record';
+		FOR source AS Environment.Split.Array[] DO
+
+			SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].xsd:complexType.xsd:sequence.xsd:element[i].(XMLNSC.Attribute)default = 'field_value' || CAST(i AS CHAR ) || '_' || source;
+			SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].xsd:complexType.xsd:sequence.xsd:element[i].(XMLNSC.Attribute)name = source;
+			SET OutputRoot.XMLNSC.xsd:schema.xsd:element.xsd:complexType.xsd:sequence.xsd:element[2].xsd:complexType.xsd:sequence.xsd:element[i].(XMLNSC.Attribute)type = 'xsd:string';
+			SET i=i+1;
+		END FOR;
+		--END CREATE RECORD		
+
+
+
+		RETURN TRUE;
+	END;
+	/*
+	========================================================================================
+	PROCEDURE Split
+	========================================================================================
+	Splits S on Delim into an array in Env (Environment.Split.Array[])
+	Removes Environment.Split before refilling it
+	*/
+	CREATE PROCEDURE Split (IN S CHARACTER, IN Env REFERENCE, IN Delim CHARACTER)
+	BEGIN
+		DECLARE P INTEGER;
+		DECLARE Idx INTEGER 1;
+
+		SET Env.Split = NULL;
+
+		REPEAT
+			SET P = POSITION(Delim IN S);
+			IF P = 0 THEN
+				SET Env.Split.Array[Idx] = S;
+			ELSE
+				SET Env.Split.Array[Idx] = LEFT(S, P - 1);
+				SET S = SUBSTRING(S FROM P + LENGTH(Delim));
+				SET Idx = Idx + 1;
+			END IF;
+			UNTIL P = 0
+
+		END REPEAT;
+	END;
+END MODULE;

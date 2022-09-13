@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="CreateCSV_DFDL_FROM_HeaderFields_MF.msgflow" nsPrefix="CreateCSV_DFDL_FROM_HeaderFields_MF.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1" nodeLayoutStyle="RECTANGLE">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <translation xmi:type="utility:TranslatableString" key="CreateCSV_DFDL_FROM_HeaderFields_MF" bundleName="CreateCSV_DFDL_FROM_HeaderFields_MF" pluginId="Build_DFDL_From_Header_APP"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Build_DFDL_From_Header_APP/icons/full/obj16/CreateCSV_DFDL_FROM_HeaderFields_MF.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/Build_DFDL_From_Header_APP/icons/full/obj30/CreateCSV_DFDL_FROM_HeaderFields_MF.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="172,278" queueName="CSV_DFDL_IN">
+        <translation xmi:type="utility:ConstantString" string="CSV_DFDL_IN"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="786,348" queueName="XML_DFDL_OUT">
+        <translation xmi:type="utility:ConstantString" string="XML_DFDL_OUT"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="466,357" computeExpression="esql://routine/#CreateCSV_DFDL_FROM_HeaderFields_MF_makeDFDL_XML.Main">
+        <translation xmi:type="utility:ConstantString" string="makeDFDL_XML"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer/>
+    <stickyBoard>
+      <stickyNote location="555,185">
+        <body xmi:type="utility:ConstantString" string="This flow takes in the header of a CSV, with a comma as the seperater, &#xA;and creates the DFDL schema xml on the output with the header.&#xA;Some work is still needed, want to make the seperator and the header required a &#xA;UDP but for now a first pass this is work for me now.&#xA;Might actually make a flow that takes in a file and creates a csv file later, but this will &#xA;speed up my work for now.&#xA;Just using default CSV wizzard(Rincewind refernce) setting, can change the line endings &#xA;and seperators once created or in the code. Make your own magic. "/>
+      </stickyNote>
+    </stickyBoard>
+  </eClassifiers>
+</ecore:EPackage>
