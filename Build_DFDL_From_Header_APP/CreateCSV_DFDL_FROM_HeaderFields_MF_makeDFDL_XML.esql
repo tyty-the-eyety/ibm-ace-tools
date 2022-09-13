@@ -24,7 +24,7 @@ CREATE COMPUTE MODULE CreateCSV_DFDL_FROM_HeaderFields_MF_makeDFDL_XML
 		SET OutputRoot.XMLNSC.xsd:schema.(XMLNSC.NamespaceDecl)xmlns:ibmSchExtn = 'http://www.ibm.com/dfdl/CommaSeparatedFormat';
 
 		SET OutputRoot.XMLNSC.xsd:schema.xsd:import.(XMLNSC.Attribute)namespace ='http://www.ibm.com/dfdl/CommaSeparatedFormat';
-		SET OutputRoot.XMLNSC.xsd:schema.xsd:import.(XMLNSC.Attribute)namespace ='IBMdefined/CommaSeparatedFormat.xsd';
+		SET OutputRoot.XMLNSC.xsd:schema.xsd:import.(XMLNSC.Attribute)schemaLocation ='IBMdefined/CommaSeparatedFormat.xsd';
 
 		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.(XMLNSC.Attribute)source = 'http://www.ogf.org/dfdl/';
 		SET OutputRoot.XMLNSC.xsd:schema.xsd:annotation.xsd:appinfo.dfdl:format.(XMLNSC.Attribute)documentFinalTerminatorCanBeMissing = 'yes';
