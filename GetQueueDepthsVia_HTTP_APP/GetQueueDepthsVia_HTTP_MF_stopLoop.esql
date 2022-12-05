@@ -10,11 +10,16 @@ CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_stopLoop
 		IF Environment.responseType = 'XML' THEN
 			SET OutputRoot.XMLNSC.queues = Environment.queues;
 		ELSE 
-			IF Environment.responseType = 'JSON' THEN
+			
+			IF Environment.responseType = 'JSON' THEN 
 				SET OutputRoot.JSON.Data.queues = Environment.queues;
 			ELSE 
 				SET OutputRoot.HTTPReplyHeader."Content-Type" = 'text/html';
-				SET OutputRoot.XMLNSC.html.head.style = 'table, th, td {border: 1px solid black;border-collapse: collapse;}';
+				SET OutputRoot.XMLNSC.html.head.style = 'table, th, td {border: 1px solid black;border-collapse: collapse;  }';
+				--SET OutputRoot.XMLNSC.html.head.script = 'function load() { setTimeout("window.open(self.location, ''_self'');", 3000); }';
+				--SET OutputRoot.XMLNSC.html.head.script.(XMLNSC.Attribute)type= 'text/javascript';
+				SET OutputRoot.XMLNSC.html.head.meta.(XMLNSC.Attribute)"http-equiv" = 'refresh' ;
+				SET OutputRoot.XMLNSC.html.head.meta.(XMLNSC.Attribute)content= '60';
 				DECLARE i INTEGER 2;
 				SET OutputRoot.XMLNSC.html.body.table.tr.th[1] = 'queueName';
 				SET OutputRoot.XMLNSC.html.body.table.tr.th[2] = 'currentDepth';
@@ -25,7 +30,18 @@ CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_stopLoop
 					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[1] = source.queueName;
 					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[2] = COALESCE(source.currentDepth , 'N/A');
 					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[3] = COALESCE(source.maxDepth , 'N/A');
-					SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4] = COALESCE(LEFT(CAST(source.percentagefull AS CHARACTER) , 5) , 'N/A');
+					IF CAST(source.percentagefull AS INTEGER) >= 75 THEN 
+						SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4] = COALESCE(LEFT(CAST(source.percentagefull AS CHARACTER) , 5) , 'N/A');
+						SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4].(XMLNSC.Attribute)style = 'background-color:red;color:white;' ; 
+					ELSE 
+						IF CAST(source.percentagefull AS INTEGER) >= 50 AND CAST(source.percentagefull AS INTEGER) < 75  THEN 
+							SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4] = COALESCE(LEFT(CAST(source.percentagefull AS CHARACTER) , 5) , 'N/A');
+							SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4].(XMLNSC.Attribute)style = 'background-color:orange;color:white;' ;
+						ELSE
+							SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4] = COALESCE(LEFT(CAST(source.percentagefull AS CHARACTER) , 5) , 'N/A');
+							SET OutputRoot.XMLNSC.html.body.table.tr[i].th[4].(XMLNSC.Attribute)style = 'background-color:green;color:white;' ;
+						END IF ;
+					END IF;
 					SET i = i+1;
 				END FOR;
 				--SET OutputRoot.XMLNSC.queues = Environment.queues;
