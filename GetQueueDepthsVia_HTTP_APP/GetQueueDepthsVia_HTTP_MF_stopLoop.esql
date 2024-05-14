@@ -12,7 +12,16 @@ CREATE COMPUTE MODULE GetQueueDepthsVia_HTTP_MF_stopLoop
 		ELSE 
 			
 			IF Environment.responseType = 'JSON' THEN 
-				SET OutputRoot.JSON.Data.queues = Environment.queues;
+				DECLARE i INTEGER 1;
+				CREATE FIELD OutputRoot.JSON.Data.queues.queue IDENTITY(JSON.Array)queue;
+				DECLARE outQueues REFERENCE TO OutputRoot.JSON.Data.queues.queue;
+				--place holder reference to move about later
+				DECLARE outQueue REFERENCE TO OutputRoot.JSON.Data.queues.queue;
+				FOR source AS Environment.queues.queue[] DO
+					DECLARE queueRow ROW source;
+					CREATE LASTCHILD OF outQueues AS outQueue NAME 'Item' ;
+					SET outQueue = queueRow;
+				END FOR;
 			ELSE 
 				SET OutputRoot.HTTPReplyHeader."Content-Type" = 'text/html';
 				SET OutputRoot.XMLNSC.html.head.style = 'table, th, td {border: 1px solid black;border-collapse: collapse;  }';
