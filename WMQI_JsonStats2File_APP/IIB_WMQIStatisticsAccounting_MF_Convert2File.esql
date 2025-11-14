@@ -1,0 +1,177 @@
+
+--
+DECLARE isThisTheFirstFlowEntry SHARED BOOLEAN TRUE;
+DECLARE isThisTheFirstNodeEntry SHARED BOOLEAN TRUE;
+
+CREATE COMPUTE MODULE IIB_WMQIStatisticsAccounting_MF_Convert2File
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.Properties = InputRoot.Properties;
+		
+		DELETE FIELD InputRoot.MQRFH2;
+		
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'DFDL' NAME 'DFDL';
+		
+		DECLARE inMsg REFERENCE TO InputRoot.JSON.Data.WMQIStatisticsAccounting.MessageFlow;
+		DECLARE inNde REFERENCE TO InputRoot.JSON.Data.WMQIStatisticsAccounting.Nodes.Item[1];
+		DECLARE inThrds REFERENCE TO InputRoot.JSON.Data.WMQIStatisticsAccounting.Threads;
+		DECLARE inTrm REFERENCE TO InputRoot.JSON.Data.WMQIStatisticsAccounting.Nodes.Item[1].TerminalStatistics[1];
+		-- MAP FLOW STATS
+		IF isThisTheFirstFlowEntry IS TRUE THEN
+			CREATE FIELD OutputRoot.DFDL.FLOW_STATS.record;
+			DECLARE oHead REFERENCE TO OutputRoot.DFDL.FLOW_STATS.record;
+			SET oHead.RecordType = 'RecordType';
+			SET oHead.BrokerLabel = 'BrokerLabel';
+			SET oHead.BrokerUUID = 'BrokerUUID';
+			SET oHead.ExecutionGroupName = 'ExecutionGroupName';
+			SET oHead.ExecutionGroupUUID = 'ExecutionGroupUUID';
+			SET oHead.MessageFlowName = 'MessageFlowName';
+			SET oHead.StartDate = 'StartDate';
+			SET oHead.StartTime = 'StartTime';
+			SET oHead.EndDate = 'EndDate';
+			SET oHead.EndTime = 'EndTime';
+			SET oHead.TotalElapsedTime = 'TotalElapsedTime';
+			SET oHead.MaximumElapsedTime = 'MaximumElapsedTime';
+			SET oHead.MinimumElapsedTime = 'MinimumElapsedTime';
+			SET oHead.TotalCPUTime = 'TotalCPUTime';
+			SET oHead.MaximumCPUTime = 'MaximumCPUTime';
+			SET oHead.MinimumCPUTime = 'MinimumCPUTime';
+			SET oHead.CPUTimeWaitingForInputMessage = 'CPUTimeWaitingForInputMessage';
+			SET oHead.ElapsedTimeWaitingForInputMessage = 'ElapsedTimeWaitingForInputMessage';
+			SET oHead.TotalInputMessages = 'TotalInputMessages';
+			SET oHead.TotalSizeOfInputMessages = 'TotalSizeOfInputMessages';
+			SET oHead.MaximumSizeOfInputMessages = 'MaximumSizeOfInputMessages';
+			SET oHead.MinimumSizeOfInputMessages = 'MinimumSizeOfInputMessages';
+			SET oHead.NumberOfThreadsInPool = 'NumberOfThreadsInPool';
+			SET oHead.TimesMaximumNumberOfThreadsReached = 'TimesMaximumNumberOfThreadsReached';
+			SET oHead.TotalNumberOfMQErrors = 'TotalNumberOfMQErrors';
+			SET oHead.TotalNumberOfMessagesWithErrors = 'TotalNumberOfMessagesWithErrors';
+			SET oHead.TotalNumberOfErrorsProcessingMessages = 'TotalNumberOfErrorsProcessingMessages';
+			SET oHead.TotalNumberOfCommits = 'TotalNumberOfCommits';
+			SET oHead.TotalNumberOfBackouts = 'TotalNumberOfBackouts';
+			SET oHead.AccoutingOrigin = 'AccoutingOrigin';
+			SET isThisTheFirstFlowEntry = FALSE;
+			PROPAGATE TO TERMINAL 'out2';
+		END IF ;
+		
+		CREATE FIELD OutputRoot.DFDL.FLOW_STATS.record;
+		DECLARE oRec REFERENCE TO OutputRoot.DFDL.FLOW_STATS.record;
+		
+		SET oRec.RecordType = FIELDVALUE(InputRoot.JSON.Data.WMQIStatisticsAccounting.RecordType);
+		SET oRec.BrokerLabel = FIELDVALUE(inMsg.BrokerLabel);
+		SET oRec.BrokerUUID = FIELDVALUE(inMsg.BrokerUUID);
+		SET oRec.ExecutionGroupName = FIELDVALUE(inMsg.ExecutionGroupName);
+		SET oRec.ExecutionGroupUUID = FIELDVALUE(inMsg.ExecutionGroupUUID);
+		SET oRec.MessageFlowName = FIELDVALUE(inMsg.MessageFlowName);
+		SET oRec.StartDate = FIELDVALUE(inMsg.StartDate);
+		SET oRec.StartTime = FIELDVALUE(inMsg.StartTime);
+		SET oRec.EndDate = FIELDVALUE(inMsg.EndDate);
+		SET oRec.EndTime = FIELDVALUE(inMsg.EndTime);
+		SET oRec.TotalElapsedTime = FIELDVALUE(inMsg.TotalElapsedTime);
+		SET oRec.MaximumElapsedTime = FIELDVALUE(inMsg.MaximumElapsedTime);
+		SET oRec.MinimumElapsedTime = FIELDVALUE(inMsg.MinimumElapsedTime);
+		SET oRec.TotalCPUTime = FIELDVALUE(inMsg.TotalCPUTime);
+		SET oRec.MaximumCPUTime = FIELDVALUE(inMsg.MaximumCPUTime);
+		SET oRec.MinimumCPUTime = FIELDVALUE(inMsg.MinimumCPUTime);
+		SET oRec.CPUTimeWaitingForInputMessage = FIELDVALUE(inMsg.CPUTimeWaitingForInputMessage);
+		SET oRec.ElapsedTimeWaitingForInputMessage = FIELDVALUE(inMsg.ElapsedTimeWaitingForInputMessage);
+		SET oRec.TotalInputMessages = FIELDVALUE(inMsg.TotalInputMessages);
+		SET oRec.TotalSizeOfInputMessages = FIELDVALUE(inMsg.TotalSizeOfInputMessages);
+		SET oRec.MaximumSizeOfInputMessages = FIELDVALUE(inMsg.MaximumSizeOfInputMessages);
+		SET oRec.MinimumSizeOfInputMessages = FIELDVALUE(inMsg.MinimumSizeOfInputMessages);
+		SET oRec.NumberOfThreadsInPool = FIELDVALUE(inMsg.NumberOfThreadsInPool);
+		SET oRec.TimesMaximumNumberOfThreadsReached = FIELDVALUE(inMsg.TimesMaximumNumberOfThreadsReached);
+		SET oRec.TotalNumberOfMQErrors = FIELDVALUE(inMsg.TotalNumberOfMQErrors);
+		SET oRec.TotalNumberOfMessagesWithErrors = FIELDVALUE(inMsg.TotalNumberOfMessagesWithErrors);
+		SET oRec.TotalNumberOfErrorsProcessingMessages = FIELDVALUE(inMsg.TotalNumberOfErrorsProcessingMessages);
+		SET oRec.TotalNumberOfCommits = FIELDVALUE(inMsg.TotalNumberOfCommits);
+		SET oRec.TotalNumberOfBackouts = FIELDVALUE(inMsg.TotalNumberOfBackouts);
+		IF FIELDVALUE(inMsg.AccoutingOrigin) IS NULL THEN
+			SET oRec.AccoutingOrigin = 'Unknown';
+		ELSE
+			SET oRec.AccoutingOrigin = FIELDVALUE(inMsg.AccoutingOrigin);
+		END IF;
+		PROPAGATE TO TERMINAL 'out2';
+		
+		
+		-- MAP NODE STATS
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'DFDL' NAME 'DFDL';
+		
+		IF isThisTheFirstNodeEntry IS TRUE THEN
+			CREATE FIELD OutputRoot.DFDL.NODE_STATS.record;
+			DECLARE oNdHead REFERENCE TO OutputRoot.DFDL.NODE_STATS.record;
+			SET oNdHead.RecordType = 'RecordType';
+			SET oNdHead.BrokerLabel = 'BrokerLabel';
+			SET oNdHead.BrokerUUID = 'BrokerUUID';
+			SET oNdHead.ExecutionGroupName = 'ExecutionGroupName';
+			SET oNdHead.ExecutionGroupUUID = 'ExecutionGroupUUID';
+			SET oNdHead.MessageFlowName = 'MessageFlowName';
+			SET oNdHead.StartDate = 'StartDate';
+			SET oNdHead.StartTime = 'StartTime';
+			SET oNdHead.EndDate = 'EndDate';
+			SET oNdHead.EndTime = 'EndTime';
+			SET oNdHead.Label = 'Label';
+			SET oNdHead.Type = 'Type';
+			SET oNdHead.TotalElapsedTime = 'TotalElapsedTime';
+			SET oNdHead.MaximumElapsedTime = 'MaximumElapsedTime';
+			SET oNdHead.MinimumElapsedTime = 'MinimumElapsedTime';
+			SET oNdHead.TotalCPUTime = 'TotalCPUTime';
+			SET oNdHead.MaximumCPUTime = 'MaximumCPUTime';
+			SET oNdHead.MinimumCPUTime = 'MinimumCPUTime';
+			SET oNdHead.CountOfInvocations = 'CountOfInvocations';
+			SET oNdHead.NumberOfInputTerminals = 'NumberOfInputTerminals';
+			SET oNdHead.NumberOfOutputTerminals= 'NumberOfOutputTerminals';
+			SET isThisTheFirstNodeEntry = FALSE;
+			PROPAGATE TO TERMINAL 'out1';
+		END IF ;
+		
+		-- need to loop around each node
+		WHILE LASTMOVE(inNde) = TRUE DO
+			CREATE FIELD OutputRoot.DFDL.NODE_STATS.record;		
+			DECLARE oNdRec REFERENCE TO OutputRoot.DFDL.NODE_STATS.record;
+			-- check if the node was even called , no point in logging empty rows :S
+			IF CAST(FIELDVALUE(inNde.CountOfInvocations) AS INTEGER) > 0 THEN
+				SET oNdRec.RecordType = FIELDVALUE(InputRoot.JSON.Data.WMQIStatisticsAccounting.RecordType);
+				SET oNdRec.BrokerLabel = FIELDVALUE(inMsg.BrokerLabel);
+				SET oNdRec.BrokerUUID = FIELDVALUE(inMsg.BrokerUUID);
+				SET oNdRec.ExecutionGroupName = FIELDVALUE(inMsg.ExecutionGroupName);
+				SET oNdRec.ExecutionGroupUUID = FIELDVALUE(inMsg.ExecutionGroupUUID);
+				SET oNdRec.MessageFlowName = FIELDVALUE(inMsg.MessageFlowName);
+				SET oNdRec.StartDate = FIELDVALUE(inMsg.StartDate);
+				SET oNdRec.StartTime = FIELDVALUE(inMsg.StartTime);
+				SET oNdRec.EndDate = FIELDVALUE(inMsg.EndDate);
+				SET oNdRec.EndTime = FIELDVALUE(inMsg.EndTime);
+
+				SET oNdRec.Label = FIELDVALUE(inNde.Label);
+				SET oNdRec.Type = FIELDVALUE(inNde.Type);
+				SET oNdRec.TotalElapsedTime = FIELDVALUE(inNde.TotalElapsedTime);
+				SET oNdRec.MaximumElapsedTime = FIELDVALUE(inNde.MaximumElapsedTime);
+				SET oNdRec.MinimumElapsedTime = FIELDVALUE(inNde.MinimumElapsedTime);
+				SET oNdRec.TotalCPUTime = FIELDVALUE(inNde.TotalCPUTime);
+				SET oNdRec.MaximumCPUTime = FIELDVALUE(inNde.MaximumCPUTime);
+				SET oNdRec.MinimumCPUTime = FIELDVALUE(inNde.MinimumCPUTime);
+				SET oNdRec.CountOfInvocations = FIELDVALUE(inNde.CountOfInvocations);
+				SET oNdRec.NumberOfInputTerminals = FIELDVALUE(inNde.NumberOfInputTerminals);
+				SET oNdRec.NumberOfOutputTerminals= FIELDVALUE(inNde.NumberOfOutputTerminals);
+				PROPAGATE TO TERMINAL 'out1';
+			END IF ;
+			MOVE inNde NEXTSIBLING;
+		END WHILE;
+
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
